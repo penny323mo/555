@@ -100,7 +100,7 @@
   .card h2{margin:4px 0 8px; font-size:clamp(18px,3vw,22px)}
   .opt{display:grid; gap:10px; margin-top:10px}
   .muted{opacity:.8; font-size:13px; margin-top:6px}
-  .split{display:flex; gap:8px; flex-wrap:wrap}
+  .split{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
   .tag{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #2f343e; background:#1e232b}
 </style>
 </head>
@@ -115,18 +115,17 @@
     <div class="card">
       <h2>開始對局</h2>
       <div class="opt">
-        <button id="start-pve" class="btn">單人對戰（對電腦）</button>
-        <div id="pve-opts" class="split" style="display:none">
-          <span class="tag">先手：</span>
+        <button id="start-pve" class="btn">單人對戰（立即開始）</button>
+        <div class="split">
+          <span class="tag">進階設定：</span>
           <button class="btn secondary" data-first="player">玩家先手（黑）</button>
           <button class="btn secondary" data-first="ai">電腦先手（黑）</button>
-          <span class="tag">難度：</span>
-          <button class="btn secondary" data-level="easy">簡單</button>
-          <button class="btn secondary" data-level="normal">普通</button>
+          <button class="btn secondary" data-level="easy">難度：簡單</button>
+          <button class="btn secondary" data-level="normal">難度：普通</button>
         </div>
         <button id="start-pvp" class="btn">雙人對戰（本地輪流）</button>
       </div>
-      <p class="muted">提示：單人模式支援悔棋（一次回退玩家+電腦兩手）。你可隨時按「回主選單」重新選模式。</p>
+      <p class="muted">提示：單人模式悔棋會一次回退玩家+電腦兩手。你可隨時按「回主選單」重新選模式或設定。</p>
     </div>
   </div>
 
@@ -165,16 +164,15 @@
   const overlay = document.getElementById('overlay');
   const startPVE = document.getElementById('start-pve');
   const startPVP = document.getElementById('start-pvp');
-  const pveOpts = document.getElementById('pve-opts');
 
   let board, turn, lastMove, gameOver, history, winLine;
   let mode = 'none';              // 'pvp' | 'pve' | 'none'
-  let aiColor = WHITE;            // AI執子顏色
+  let aiColor = WHITE;            // AI執子顏色（預設玩家先手=AI白）
   let aiLevel = 'normal';         // 'easy' | 'normal'
   let aiThinking = false;
 
-  // 建盤
   const stars = new Set(["3,3","3,11","11,3","11,11","7,7","3,7","7,3","11,7","7,11"]);
+
   function renderBoard(){
     boardEl.style.setProperty('--size', SIZE);
     boardEl.innerHTML = '';
@@ -196,37 +194,43 @@
   function resetGame(){
     board = Array.from({length: SIZE}, () => Array(SIZE).fill(EMPTY));
     turn = BLACK; lastMove = null; gameOver = false; history = []; winLine = [];
-    aiThinking = false;
-    updateUI();
+    aiThinking = false; updateUI();
   }
 
   function startMenu(){
     mode = 'none'; overlay.style.display='flex';
-    setStatus('請於上方選擇模式開始。');
-    resetGame();
+    setStatus('請於上方選擇模式開始。'); resetGame();
   }
 
-  // ====== Start Menu 行為 ======
+  // ====== Start Menu ======
+  // 一按「單人對戰」即開局（預設：玩家先手、普通難度）
   startPVE.addEventListener('click', ()=>{
-    pveOpts.style.display = (pveOpts.style.display==='none'?'grid':'none');
+    aiColor = WHITE; aiLevel = 'normal';
+    begin('pve');
   });
-  pveOpts.addEventListener('click', (e)=>{
+
+  // 進階設定：先手/難度（點擊即套用並開始單人）
+  overlay.addEventListener('click', (e)=>{
     const t = e.target;
-    if (t.dataset.first){
+    if (t.dataset && t.dataset.first){
       aiColor = (t.dataset.first==='ai') ? BLACK : WHITE;
       begin('pve');
-    }else if (t.dataset.level){
+    } else if (t.dataset && t.dataset.level){
       aiLevel = t.dataset.level;
       setStatus(`難度設定：${aiLevel==='easy'?'簡單':'普通'}。`);
     }
   });
+
   startPVP.addEventListener('click', ()=> begin('pvp'));
 
   function begin(m){
     mode = m; overlay.style.display='none'; resetGame();
     if (mode==='pve'){
       setStatus(`${aiColor===BLACK?'電腦':'玩家'}先手。${turn===aiColor?'電腦思考中…':'輪到你。'}`);
-      if (turn===aiColor) aiMove();
+      // 若電腦先手，立即落子（放到下一個動畫循環，避免初始重繪阻塞）
+      if (turn===aiColor){
+        requestAnimationFrame(()=> aiMove());
+      }
     }else{
       setStatus('雙人對戰開始。黑子行。');
     }
@@ -235,23 +239,22 @@
   // ====== 下子 / 勝負判定 ======
   function onPlace(e){
     if (gameOver) return;
-    if (mode==='pve' && aiThinking) return;              // AI思考中禁止點擊
+    if (mode==='pve' && aiThinking) return;
     const cell = e.currentTarget;
     const x = +cell.dataset.x, y = +cell.dataset.y;
     if (board[y][x] !== EMPTY) return;
-    if (mode==='pve' && turn===aiColor) return;          // 輪到AI時忽略玩家點擊
+    if (mode==='pve' && turn===aiColor) return;
 
     placeStone(x,y,turn,true);
     const result = checkWin(x,y,turn);
     if (result.win){ endGame(turn,result.line); return; }
 
-    // 換手
     turn = (turn===BLACK)?WHITE:BLACK;
     refreshTurnStatus();
 
-    // 若單人＆到AI
     if (mode==='pve' && turn===aiColor && !gameOver){
-      aiMove();
+      // 用 rAF 確保 DOM 已更新，再觸發 AI
+      requestAnimationFrame(()=> aiMove());
     }
   }
 
@@ -318,18 +321,19 @@
   btnUndo.addEventListener('click', ()=>{
     if (!history.length) return;
     if (mode==='pve'){
-      // 單人：一次回退 玩家+AI 兩手（若剛好結束，先清掉勝利標記）
       if (gameOver){ gameOver=false; winLine=[]; updateUI(); }
-      // 至少兩手
-      if (history.length<1) return;
+      // 至少回退玩家一步；如有AI一步，再一齊回退
       const last = history.pop(); removeStone(last.x,last.y);
-      if (history.length>0){ const last2 = history.pop(); removeStone(last2.x,last2.y); turn = last2.color; }
-      else { turn = BLACK; }
+      if (history.length>0){
+        const last2 = history.pop(); removeStone(last2.x,last2.y);
+        turn = last2.color;
+      } else {
+        turn = BLACK;
+      }
       lastMove = history.length ? {x:history[history.length-1].x, y:history[history.length-1].y} : null;
       if (lastMove){ boardEl.children[lastMove.y*SIZE + lastMove.x].classList.add('last'); }
-      setStatus('已悔棋（回退玩家與電腦兩手）。輪到你。');
+      setStatus('已悔棋（回退玩家與電腦兩手，如有）。輪到你。');
     }else{
-      // 雙人：回退一步
       if (gameOver){ gameOver=false; winLine=[]; updateUI(); }
       const last = history.pop(); if (!last) return;
       removeStone(last.x,last.y); turn = last.color;
@@ -341,16 +345,20 @@
 
   btnRestart.addEventListener('click', ()=>{
     resetGame();
-    if (mode==='pve' && turn===aiColor){ setStatus('電腦思考中…'); aiMove(); }
-    else refreshTurnStatus();
+    if (mode==='pve' && turn===aiColor){
+      setStatus('電腦思考中…'); requestAnimationFrame(()=> aiMove());
+    } else {
+      refreshTurnStatus();
+    }
   });
 
   btnMenu.addEventListener('click', startMenu);
 
   // ====== 輕量 AI ======
   function aiMove(){
+    if (gameOver) return;
     aiThinking = true;
-    // 模擬少少思考時間
+    setStatus('電腦思考中…');
     setTimeout(()=>{
       const move = (aiLevel==='easy') ? randomMove() : smartMove();
       if (!move){ aiThinking=false; return; }
@@ -359,31 +367,28 @@
       if (result.win){ endGame(aiColor, result.line); aiThinking=false; return; }
       turn = (aiColor===BLACK)?WHITE:BLACK;
       aiThinking = false; refreshTurnStatus();
-    }, 220);
+    }, 180);
   }
 
   function randomMove(){
     const empties = [];
     for(let y=0;y<SIZE;y++) for(let x=0;x<SIZE;x++) if (board[y][x]===EMPTY) empties.push({x,y});
     if (!empties.length) return null;
-    // 稍微偏向中心
+    // 輕微偏向中心
     empties.sort((a,b)=> distToCenter(a)-distToCenter(b));
-    return empties[Math.min( Math.floor(Math.random()*5), empties.length-1 )];
+    return empties[Math.min(Math.floor(Math.random()*5), empties.length-1)];
   }
 
   function smartMove(){
     const me = aiColor;
     const opp = (me===BLACK)?WHITE:BLACK;
 
-    // 1) 能直接贏：下去即成五
     const winNow = findWinningMove(me);
     if (winNow) return winNow;
 
-    // 2) 擋對手必勝
     const block = findWinningMove(opp);
     if (block) return block;
 
-    // 3) 評分（連線潛力 + 靠近中心）
     let best = null, bestScore = -1e9;
     for(let y=0;y<SIZE;y++){
       for(let x=0;x<SIZE;x++){
@@ -410,7 +415,6 @@
   function isWin(x,y,color){ return checkWin(x,y,color).win; }
 
   function evaluateAt(x,y,color){
-    // 放上去估分：四方向連續數 + 活三/活四簡化
     let score = 0;
     const dirs = [{dx:1,dy:0},{dx:0,dy:1},{dx:1,dy:1},{dx:1,dy:-1}];
     for (const {dx,dy} of dirs){
@@ -421,38 +425,30 @@
   }
 
   function countLine(x,y,dx,dy,color){
-    // 以(x,y)假設落子，兩邊擴展
     let count=1, openEnds=0;
-    // 前向
     let nx=x+dx, ny=y+dy;
     while(inBoard(nx,ny) && board[ny][nx]===color){ count++; nx+=dx; ny+=dy; }
     if (inBoard(nx,ny) && board[ny][nx]===EMPTY) openEnds++;
-    // 後向
     nx=x-dx; ny=y-dy;
     while(inBoard(nx,ny) && board[ny][nx]===color){ count++; nx-=dx; ny-=dy; }
     if (inBoard(nx,ny) && board[ny][nx]===EMPTY) openEnds++;
-
-    // 簡化打分（越高越好）
     let score = 0;
     if (count>=5) score += 100000;
-    else if (count===4 && openEnds===2) score += 5000;      // 活四
-    else if (count===4 && openEnds===1) score += 1200;      // 衝四
-    else if (count===3 && openEnds===2) score += 800;       // 活三
-    else if (count===3 && openEnds===1) score += 200;       // 眠三
-    else if (count===2 && openEnds===2) score += 80;        // 活二
-    else if (count===2 && openEnds===1) score += 30;        // 眠二
+    else if (count===4 && openEnds===2) score += 5000;
+    else if (count===4 && openEnds===1) score += 1200;
+    else if (count===3 && openEnds===2) score += 800;
+    else if (count===3 && openEnds===1) score += 200;
+    else if (count===2 && openEnds===2) score += 80;
+    else if (count===2 && openEnds===1) score += 30;
     else score += 5;
-
     return {count, openEnds, score};
   }
 
   function distToCenter(p){
-    const c = (SIZE-1)/2;
-    const dx = p.x - c, dy = p.y - c;
+    const c = (SIZE-1)/2; const dx = p.x - c, dy = p.y - c;
     return Math.hypot(dx,dy);
   }
 
-  // ====== 語音（可用就播） ======
   function speak(text){
     try{
       if (!('speechSynthesis' in window)) return;
@@ -464,7 +460,7 @@
 
   // ====== 初始化 ======
   renderBoard();
-  startMenu(); // 先出主選單
+  startMenu();
 })();
 </script>
 </body>
