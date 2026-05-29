@@ -3,6 +3,9 @@ node_modules
 dist
 dist-ssr
 
+# TypeScript 建置快取
+*.tsbuildinfo
+
 # 環境變數
 .env
 .env.local
