@@ -54,10 +54,13 @@ body {
   top: 16px;
   left: 16px;
   z-index: 10;
+  width: min(360px, calc(100% - 32px));
+}
+
+.search-bar__field {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: min(360px, calc(100% - 32px));
   padding: 10px 14px;
   background: var(--bg-panel);
   border-radius: var(--radius);
@@ -67,6 +70,52 @@ body {
 
 .search-bar__icon {
   opacity: 0.7;
+}
+
+.search-bar__results {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 6px;
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.search-bar__hint {
+  padding: 10px 12px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.search-bar__result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-bar__result:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.search-bar__result-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.search-bar__result-meta {
+  font-size: 12px;
+  color: var(--text-dim);
 }
 
 .search-bar__input {
@@ -217,16 +266,91 @@ body {
   padding: 14px;
 }
 
-.weather-panel__coords {
-  margin: 0 0 8px;
-  font-size: 15px;
-  font-weight: 600;
+.weather-panel__state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 14px;
 }
 
-.weather-panel__hint {
-  margin: 0;
-  font-size: 13px;
+.weather-panel__current {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.weather-panel__icon {
+  font-size: 40px;
+}
+
+.weather-panel__temp {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.weather-panel__desc {
   color: var(--text-dim);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.weather-panel__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin: 0 0 14px;
+}
+
+.weather-panel__grid div {
+  display: flex;
+  flex-direction: column;
+}
+
+.weather-panel__grid dt {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.weather-panel__grid dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weather-panel__arrow {
+  display: inline-block;
+  font-size: 14px;
+}
+
+.weather-panel__hourly {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.weather-panel__hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.weather-panel__hour-time {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.weather-panel__hour-temp {
+  font-weight: 600;
 }
 
 /* ===== 載入 / 錯誤 ===== */

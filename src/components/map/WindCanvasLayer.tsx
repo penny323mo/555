@@ -3,6 +3,7 @@ import type { MapBounds } from '@/types';
 import { useMap } from '@/hooks/useMap';
 import { ParticleEngine } from '@/engine/particleEngine';
 import { MockWindProvider } from '@/services/windField/MockWindProvider';
+import { OpenMeteoWindProvider } from '@/services/windField/OpenMeteoWindProvider';
 import { COLOR_SCALES, sampleColor } from '@/utils/colorScale';
 
 // 依裝置調整粒子數與解析度，兼顧手機效能。
@@ -31,8 +32,9 @@ export function WindCanvasLayer() {
     const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
     const count = isMobile ? PARTICLE_COUNT_MOBILE : PARTICLE_COUNT_DESKTOP;
 
-    // ── 風場來源：唯一的 Phase 4 替換點（換成真實 provider 即可，引擎不動）。
-    const provider = new MockWindProvider();
+    // 真實風場（Open-Meteo）+ mock 後備：請求失敗或載入中皆以 mock 維持動畫不中斷。
+    const provider = new OpenMeteoWindProvider();
+    const fallback = new MockWindProvider();
 
     const toBounds = (): MapBounds => {
       const b = map.getBounds();
@@ -47,12 +49,28 @@ export function WindCanvasLayer() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
-    const bounds0 = toBounds();
-    const engine = new ParticleEngine(count, provider.getField(bounds0), bounds0);
-    resize();
-
     let raf = 0;
     let moving = false;
+    let disposed = false;
+    let reqToken = 0;
+
+    // 先以 mock 立即填滿（動畫即時可見），再非同步以真實資料升級。
+    const bounds0 = toBounds();
+    const engine = new ParticleEngine(count, fallback.getField(bounds0), bounds0);
+    resize();
+
+    const loadField = (bounds: MapBounds) => {
+      const token = ++reqToken;
+      Promise.resolve(provider.getField(bounds))
+        .then((field) => {
+          if (disposed || token !== reqToken) return; // 忽略過期或已卸載的回應。
+          engine.reset(field, bounds);
+        })
+        .catch(() => {
+          // 真實資料失敗時維持 mock，不中斷動畫。
+        });
+    };
+    loadField(bounds0);
 
     const speedScale = () => BASE_SPEED * Math.pow(2, REF_ZOOM - map.getZoom());
     const clearCanvas = () => ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -94,7 +112,9 @@ export function WindCanvasLayer() {
       cancelAnimationFrame(raf); // moveend 與 zoomend 可能同時觸發，先取消避免重複迴圈。
       resize();
       const bounds = toBounds();
-      engine.reset(provider.getField(bounds), bounds);
+      // 立即以 mock 重新散佈（避免空窗），再非同步升級為真實資料。
+      engine.reset(fallback.getField(bounds), bounds);
+      loadField(bounds);
       clearCanvas();
       raf = requestAnimationFrame(render);
     };
@@ -114,6 +134,7 @@ export function WindCanvasLayer() {
     raf = requestAnimationFrame(render);
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(raf);
       map.off('movestart', onMoveStart);
       map.off('zoomstart', onMoveStart);

@@ -9,7 +9,7 @@ import { MAP_INITIAL_VIEW, RASTER_STYLE } from '@/config/map.config';
 export function MapContainer() {
   const containerRef = useRef<HTMLDivElement>(null);
   const setMap = useSetMap();
-  const setSelectedPoint = useAppStore((s) => s.setSelectedPoint);
+  const selectLocation = useAppStore((s) => s.selectLocation);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -26,9 +26,9 @@ export function MapContainer() {
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-    // Phase 2：點擊地圖先記錄座標以驗證面板流程；真實天氣查詢於 Phase 4 接入。
+    // 點擊地圖選定座標，觸發天氣查詢。
     map.on('click', (e) => {
-      setSelectedPoint({ lng: e.lngLat.lng, lat: e.lngLat.lat });
+      selectLocation({ lng: e.lngLat.lng, lat: e.lngLat.lat });
     });
 
     map.on('load', () => setMap(map));

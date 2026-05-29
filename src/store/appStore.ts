@@ -9,7 +9,10 @@ interface AppState {
 
   /** 使用者點擊或搜尋選定的座標（null 表示未選取）。 */
   selectedPoint: LngLat | null;
-  setSelectedPoint: (point: LngLat | null) => void;
+  /** 選定地點名稱（搜尋來源才有；地圖點擊為 null）。 */
+  selectedName: string | null;
+  /** 選定地點；point 為 null 表示清除。 */
+  selectLocation: (point: LngLat | null, name?: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -17,5 +20,7 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveLayer: (layer) => set({ activeLayer: layer }),
 
   selectedPoint: null,
-  setSelectedPoint: (point) => set({ selectedPoint: point }),
+  selectedName: null,
+  selectLocation: (point, name) =>
+    set({ selectedPoint: point, selectedName: point ? (name ?? null) : null }),
 }));

@@ -41,6 +41,15 @@ export interface WeatherModel {
   /** 天氣狀態代碼（WMO weather code）。 */
   weatherCode: number;
   time: string;
+  /** 未來數小時簡易預報。 */
+  hourly?: HourlyForecast[];
+}
+
+/** 單一小時的預報。 */
+export interface HourlyForecast {
+  time: string;
+  temperature: number;
+  weatherCode: number;
 }
 
 /** 地理編碼搜尋結果。 */
