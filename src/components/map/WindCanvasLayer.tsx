@@ -113,16 +113,19 @@ export function WindCanvasLayer() {
       raf = 0;
       clearCanvas();
     };
+    let loadTimer: ReturnType<typeof setTimeout> | undefined;
     const onMoveEnd = () => {
       moving = false;
       cancelAnimationFrame(raf); // moveend 與 zoomend 可能同時觸發，先取消避免重複迴圈。
       resize();
       const bounds = toBounds();
-      // 立即以 mock 重新散佈（避免空窗），再非同步升級為真實資料。
+      // 立即以 mock 重新散佈（避免空窗），動畫不中斷。
       engine.reset(fallback.getField(bounds), bounds);
-      loadField(bounds);
       clearCanvas();
       raf = requestAnimationFrame(render);
+      // 真實資料請求 debounce：連續拖動只在停下後抓一次，節省 API 額度。
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(() => loadField(bounds), 500);
     };
 
     map.on('movestart', onMoveStart);
@@ -142,6 +145,7 @@ export function WindCanvasLayer() {
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
+      clearTimeout(loadTimer);
       map.off('movestart', onMoveStart);
       map.off('zoomstart', onMoveStart);
       map.off('moveend', onMoveEnd);

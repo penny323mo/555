@@ -77,24 +77,28 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
       ctx.drawImage(off, 0, 0, grid, grid, 0, 0, canvas.width, canvas.height);
     };
 
+    let loadTimer: ReturnType<typeof setTimeout> | undefined;
     const load = () => {
       const bounds = toBounds();
       const t = ++token;
       setLoading(true);
-      // 先以 mock 立即顯示，再以真實資料升級（失敗則維持 mock）。
+      // 先以 mock 立即顯示，再 debounce 抓真實資料（停下才抓一次，節省 API 額度）。
       draw(mockScalarField(layer, bounds, MOCK_GRID));
-      getScalarField(layer, bounds)
-        .then((f) => {
-          if (disposed || t !== token) return;
-          draw(f);
-          setDataMode('live');
-        })
-        .catch(() => {
-          if (!disposed && t === token) setDataMode('mock');
-        })
-        .finally(() => {
-          if (!disposed && t === token) setLoading(false);
-        });
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(() => {
+        getScalarField(layer, bounds)
+          .then((f) => {
+            if (disposed || t !== token) return;
+            draw(f);
+            setDataMode('live');
+          })
+          .catch(() => {
+            if (!disposed && t === token) setDataMode('mock');
+          })
+          .finally(() => {
+            if (!disposed && t === token) setLoading(false);
+          });
+      }, 500);
     };
 
     resize();
@@ -112,6 +116,7 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
 
     return () => {
       disposed = true;
+      clearTimeout(loadTimer);
       map.off('movestart', onMoveStart);
       map.off('zoomstart', onMoveStart);
       map.off('moveend', onMoveEnd);

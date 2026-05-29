@@ -1,4 +1,5 @@
 import type { LayerId, MapBounds } from '@/types';
+import { LruCache, boundsKey } from '@/utils/cache';
 
 // 四種純量圖層（風以外）。
 export type ScalarLayerId = Exclude<LayerId, 'wind'>;
@@ -19,8 +20,11 @@ const VAR: Record<ScalarLayerId, string> = {
 };
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
-// 點數需在 Open-Meteo 多點查詢上限內（100 點以內較保險）。
-const REAL_GRID = 10;
+// Open-Meteo 多點請求按「點數」計入每小時額度，GRID 直接放大 API 用量。
+const REAL_GRID = 6;
+
+// 模組層級快取：避免每次平移/縮放都重抓（先前完全沒快取是燒爆額度主因）。
+const scalarCache = new LruCache<ScalarField>(48);
 
 interface OMScalarItem {
   current: Record<string, number>;
@@ -32,6 +36,10 @@ export async function getScalarField(
   bounds: MapBounds,
   signal?: AbortSignal,
 ): Promise<ScalarField> {
+  const cacheKey = `${layer}:${boundsKey(bounds)}`;
+  const cached = scalarCache.get(cacheKey);
+  if (cached) return cached;
+
   const grid = REAL_GRID;
   const lats: number[] = [];
   const lons: number[] = [];
@@ -61,7 +69,9 @@ export async function getScalarField(
   for (let i = 0; i < values.length; i++) {
     values[i] = arr[i]?.current[VAR[layer]] ?? 0;
   }
-  return { grid, values, bounds };
+  const field: ScalarField = { grid, values, bounds };
+  scalarCache.set(cacheKey, field);
+  return field;
 }
 
 // Mock 後備：以解析函數產生合理範圍的場，視覺到位即可。
