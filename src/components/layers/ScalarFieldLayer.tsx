@@ -34,7 +34,9 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
   const map = useMap();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(false);
-  const [dataMode, setDataMode] = useState<'live' | 'mock'>('mock');
+  const [dataMode, setDataMode] = useState<'live' | 'owm' | 'mock'>('mock');
+  // 由 OWM tile 失敗時呼叫，改畫 mock heatmap。
+  const fallbackToMockRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!map || !canvasRef.current) return;
@@ -79,12 +81,20 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
       ctx.drawImage(off, 0, 0, grid, grid, 0, 0, canvas.width, canvas.height);
     };
 
+    const toMock = (bounds: MapBounds) => {
+      draw(mockScalarField(layer, bounds, MOCK_GRID));
+      setDataMode('mock');
+    };
+    fallbackToMockRef.current = () => {
+      if (!disposed) toMock(toBounds());
+    };
+
     let loadTimer: ReturnType<typeof setTimeout> | undefined;
     const load = () => {
       const bounds = toBounds();
       const t = ++token;
       setLoading(true);
-      // 有 OWM 備援時不畫 mock（避免假資料）；否則先以 mock 立即顯示。
+      // 有 OWM 備援時先清空（等 tile）；否則先以 mock 立即顯示。
       if (OWM_AVAILABLE) clear();
       else draw(mockScalarField(layer, bounds, MOCK_GRID));
       clearTimeout(loadTimer);
@@ -97,9 +107,13 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
           })
           .catch(() => {
             if (disposed || t !== token) return;
-            // 有 OWM 備援則清空畫布改顯示 OWM tile；否則維持 mock。
-            if (OWM_AVAILABLE) clear();
-            setDataMode('mock');
+            // 有 OWM 備援則改顯示 OWM tile（失敗會再退回 mock）；否則直接 mock。
+            if (OWM_AVAILABLE) {
+              clear();
+              setDataMode('owm');
+            } else {
+              toMock(bounds);
+            }
           })
           .finally(() => {
             if (!disposed && t === token) setLoading(false);
@@ -130,15 +144,16 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
     };
   }, [map, layer]);
 
-  const usingOwm = dataMode === 'mock' && OWM_AVAILABLE;
   return (
     <>
-      {usingOwm && <OwmTileLayer owmLayer={OWM_LAYER[layer]} />}
+      {dataMode === 'owm' && (
+        <OwmTileLayer owmLayer={OWM_LAYER[layer]} onError={() => fallbackToMockRef.current()} />
+      )}
       <canvas ref={canvasRef} className="scalar-canvas" />
-      <div className={`radar-badge ${dataMode === 'mock' && !OWM_AVAILABLE ? 'is-warn' : ''}`}>
+      <div className={`radar-badge ${dataMode === 'mock' ? 'is-warn' : ''}`}>
         {dataMode === 'live'
           ? '即時資料(Open-Meteo)'
-          : usingOwm
+          : dataMode === 'owm'
             ? 'OpenWeatherMap 備援'
             : '示意資料(無法連線即時資料)'}
       </div>

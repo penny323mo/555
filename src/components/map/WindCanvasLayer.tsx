@@ -28,8 +28,10 @@ const LINE_ALPHA = 0.85;
 export function WindCanvasLayer() {
   const map = useMap();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // 'live' = 真實 Open-Meteo 風場；'mock' = 連線失敗時的示意資料。
-  const [dataMode, setDataMode] = useState<'live' | 'mock'>('mock');
+  // live = 真實 Open-Meteo；owm = OpenWeatherMap tile；mock = 示意資料。
+  const [dataMode, setDataMode] = useState<'live' | 'owm' | 'mock'>('mock');
+  // 由 OWM tile 失敗時呼叫，切換為 mock 粒子（在 effect 內賦值）。
+  const fallbackToMockRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!map || !canvasRef.current) return;
@@ -81,19 +83,29 @@ export function WindCanvasLayer() {
         })
         .catch(() => {
           if (disposed || token !== reqToken) return;
-          // 有 OWM 備援：保持不畫粒子，改顯示 OWM tile。
-          // 無 OWM：才退回 mock 動畫（明確標示為示意資料）。
           if (OWM_AVAILABLE) {
+            // 改由 OWM tile 顯示，暫停粒子；若 tile 也失敗會再退回 mock。
             suppress = true;
             clearCanvas();
+            setDataMode('owm');
           } else {
-            engine.reset(fallback.getField(bounds), bounds);
-            suppress = false;
-            clearCanvas();
+            toMock(bounds);
           }
-          setDataMode('mock');
         });
     };
+
+    // 退回 mock 粒子（明確示意資料）。
+    const toMock = (bounds: MapBounds) => {
+      engine.reset(fallback.getField(bounds), bounds);
+      suppress = false;
+      clearCanvas();
+      setDataMode('mock');
+    };
+    // 供 OWM tile 載入失敗時呼叫。
+    fallbackToMockRef.current = () => {
+      if (!disposed) toMock(toBounds());
+    };
+
     loadField(bounds0);
 
     const speedScale = () => BASE_SPEED * Math.pow(2, REF_ZOOM - map.getZoom());
@@ -179,15 +191,16 @@ export function WindCanvasLayer() {
     };
   }, [map]);
 
-  const usingOwm = dataMode === 'mock' && OWM_AVAILABLE;
   return (
     <>
-      {usingOwm && <OwmTileLayer owmLayer={OWM_LAYER.wind} />}
+      {dataMode === 'owm' && (
+        <OwmTileLayer owmLayer={OWM_LAYER.wind} onError={() => fallbackToMockRef.current()} />
+      )}
       <canvas ref={canvasRef} className="wind-canvas" />
-      <div className={`radar-badge ${dataMode === 'mock' && !OWM_AVAILABLE ? 'is-warn' : ''}`}>
+      <div className={`radar-badge ${dataMode === 'mock' ? 'is-warn' : ''}`}>
         {dataMode === 'live'
           ? '風・即時資料(Open-Meteo 地面 10m)'
-          : usingOwm
+          : dataMode === 'owm'
             ? '風・OpenWeatherMap 備援'
             : '風・示意資料(無法連線即時資料)'}
       </div>
