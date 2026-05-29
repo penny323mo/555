@@ -54,8 +54,12 @@ config/      圖層 / 地圖 / 繁中字典
 
 ## 資料來源與網路注意事項
 
-本專案使用 **Open-Meteo**（`api.open-meteo.com` / `geocoding-api.open-meteo.com`），
-免費且免 API key，請求由**使用者瀏覽器直接發出**。
+本專案使用以下免費、免 API key 的真實資料來源，請求皆由**使用者瀏覽器直接發出**：
+
+- **Open-Meteo**（`api.open-meteo.com` / `geocoding-api.open-meteo.com`）：
+  風 / 溫度 / 雲量 / 氣壓點取樣（風 12×12、純量 16×16 格點）、城市搜尋、點查詢天氣。
+- **RainViewer**（`api.rainviewer.com` / `tilecache.rainviewer.com`）：
+  降雨圖層使用全球真實雷達回波磚（最新觀測影格）。
 
 - 部署到 Vercel / GitHub Pages 後，於一般網路環境即可正常取得真實資料。
 - 若所在網路封鎖上述網域（例如某些沙箱或受限環境），搜尋與點查詢會顯示錯誤、

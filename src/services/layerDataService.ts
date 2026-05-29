@@ -19,7 +19,7 @@ const VAR: Record<ScalarLayerId, string> = {
 };
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
-const REAL_GRID = 12;
+const REAL_GRID = 16;
 
 interface OMScalarItem {
   current: Record<string, number>;
