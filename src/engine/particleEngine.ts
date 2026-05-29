@@ -56,14 +56,24 @@ export class ParticleEngine {
   /**
    * 推進一幀。speedScale 由呼叫端依縮放等級給定，
    * 使粒子在不同 zoom 下的螢幕移動速度大致一致。
+   * minSpeed：弱風時的最低位移當量（m/s），讓近乎無風處仍有可見流動；
+   * 上色仍以真實風速為準。
    */
-  step(speedScale: number): void {
+  step(speedScale: number, minSpeed = 0): void {
     for (const p of this.particles) {
       p.prevLng = p.lng;
       p.prevLat = p.lat;
 
-      const { u, v } = this.field.getVector(p.lng, p.lat);
-      p.speed = Math.hypot(u, v);
+      let { u, v } = this.field.getVector(p.lng, p.lat);
+      const mag = Math.hypot(u, v);
+      p.speed = mag; // 顏色用真實風速。
+
+      // 弱風時沿原方向放大到最低視覺速度（完全無風則維持靜止）。
+      if (mag > 1e-4 && mag < minSpeed) {
+        const k = minSpeed / mag;
+        u *= k;
+        v *= k;
+      }
 
       const latRad = (p.lat * Math.PI) / 180;
       const cosLat = Math.max(0.1, Math.cos(latRad));

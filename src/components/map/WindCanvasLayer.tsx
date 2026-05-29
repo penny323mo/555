@@ -7,15 +7,17 @@ import { OpenMeteoWindProvider } from '@/services/windField/OpenMeteoWindProvide
 import { COLOR_SCALES, sampleColor } from '@/utils/colorScale';
 
 // 依裝置調整粒子數與解析度，兼顧手機效能。
-const PARTICLE_COUNT_DESKTOP = 3000;
-const PARTICLE_COUNT_MOBILE = 1000;
+const PARTICLE_COUNT_DESKTOP = 4000;
+const PARTICLE_COUNT_MOBILE = 1800;
 // 速度補償基準：在 REF_ZOOM 用 BASE_SPEED，其餘縮放等比調整，
 // 使粒子的螢幕移動速度大致不受 zoom 影響。
 const REF_ZOOM = 4;
-const BASE_SPEED = 0.015;
+const BASE_SPEED = 0.032;
+// 弱風也能看出流動：給每個粒子一個最低視覺速度（m/s 當量）。
+const MIN_VISUAL_SPEED = 2.5;
 // 拖尾保留率（destination-in 每幀乘上的 alpha，越接近 1 拖尾越長）。
-const FADE_ALPHA = 0.94;
-const LINE_WIDTH = 1.3;
+const FADE_ALPHA = 0.96;
+const LINE_WIDTH = 1.4;
 
 // Canvas 風場粒子層：疊在地圖上，粒子以經緯度錨定，每幀投影成螢幕座標繪製。
 export function WindCanvasLayer() {
@@ -85,7 +87,7 @@ export function WindCanvasLayer() {
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'source-over';
 
-      engine.step(speedScale());
+      engine.step(speedScale(), MIN_VISUAL_SPEED);
       ctx.lineWidth = LINE_WIDTH;
       for (const p of engine.getParticles()) {
         if (p.age === 0) continue; // 剛重生，跳過避免拉出長線。
