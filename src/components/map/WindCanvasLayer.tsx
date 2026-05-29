@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MapBounds } from '@/types';
 import { useMap } from '@/hooks/useMap';
 import { ParticleEngine } from '@/engine/particleEngine';
@@ -23,6 +23,8 @@ const LINE_WIDTH = 1.4;
 export function WindCanvasLayer() {
   const map = useMap();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // 'live' = 真實 Open-Meteo 風場；'mock' = 連線失敗時的示意資料。
+  const [dataMode, setDataMode] = useState<'live' | 'mock'>('mock');
 
   useEffect(() => {
     if (!map || !canvasRef.current) return;
@@ -67,9 +69,11 @@ export function WindCanvasLayer() {
         .then((field) => {
           if (disposed || token !== reqToken) return; // 忽略過期或已卸載的回應。
           engine.reset(field, bounds);
+          setDataMode('live');
         })
         .catch(() => {
           // 真實資料失敗時維持 mock，不中斷動畫。
+          if (!disposed && token === reqToken) setDataMode('mock');
         });
     };
     loadField(bounds0);
@@ -146,5 +150,12 @@ export function WindCanvasLayer() {
     };
   }, [map]);
 
-  return <canvas ref={canvasRef} className="wind-canvas" />;
+  return (
+    <>
+      <canvas ref={canvasRef} className="wind-canvas" />
+      <div className={`radar-badge ${dataMode === 'mock' ? 'is-warn' : ''}`}>
+        {dataMode === 'live' ? '風・即時資料(地面 10m)' : '風・示意資料(無法連線即時資料)'}
+      </div>
+    </>
+  );
 }

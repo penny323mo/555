@@ -6,7 +6,8 @@ import { LruCache, boundsKey } from '@/utils/cache';
 
 // 真實風場：在可視範圍取 GRID×GRID 格點，一次請求 Open-Meteo，
 // 轉成 u/v 後交給雙線性插值。引擎介面與 MockWindProvider 完全相同。
-const GRID = 12;
+// 一次請求的點數需在 Open-Meteo 多點查詢上限內，否則整批失敗會退回 mock。
+const GRID = 8;
 
 export class OpenMeteoWindProvider implements WindFieldProvider {
   private cache = new LruCache<VectorField>(16);

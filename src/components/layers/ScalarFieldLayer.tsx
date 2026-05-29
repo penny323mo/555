@@ -32,6 +32,7 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
   const map = useMap();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(false);
+  const [dataMode, setDataMode] = useState<'live' | 'mock'>('mock');
 
   useEffect(() => {
     if (!map || !canvasRef.current) return;
@@ -86,9 +87,10 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
         .then((f) => {
           if (disposed || t !== token) return;
           draw(f);
+          setDataMode('live');
         })
         .catch(() => {
-          /* 維持 mock 後備 */
+          if (!disposed && t === token) setDataMode('mock');
         })
         .finally(() => {
           if (!disposed && t === token) setLoading(false);
@@ -120,6 +122,9 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
   return (
     <>
       <canvas ref={canvasRef} className="scalar-canvas" />
+      <div className={`radar-badge ${dataMode === 'mock' ? 'is-warn' : ''}`}>
+        {dataMode === 'live' ? '即時資料' : '示意資料(無法連線即時資料)'}
+      </div>
       <LoadingOverlay visible={loading} />
     </>
   );

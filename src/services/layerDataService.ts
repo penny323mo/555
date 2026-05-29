@@ -19,7 +19,8 @@ const VAR: Record<ScalarLayerId, string> = {
 };
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
-const REAL_GRID = 16;
+// 點數需在 Open-Meteo 多點查詢上限內（100 點以內較保險）。
+const REAL_GRID = 10;
 
 interface OMScalarItem {
   current: Record<string, number>;
