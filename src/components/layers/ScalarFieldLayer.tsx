@@ -9,6 +9,8 @@ import {
 } from '@/services/layerDataService';
 import { COLOR_SCALES, hexToRgb, sampleColor } from '@/utils/colorScale';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { OwmTileLayer } from '@/components/layers/OwmTileLayer';
+import { OWM_AVAILABLE, OWM_LAYER } from '@/config/owm';
 
 const MOCK_GRID = 16;
 
@@ -82,8 +84,9 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
       const bounds = toBounds();
       const t = ++token;
       setLoading(true);
-      // 先以 mock 立即顯示，再 debounce 抓真實資料（停下才抓一次，節省 API 額度）。
-      draw(mockScalarField(layer, bounds, MOCK_GRID));
+      // 有 OWM 備援時不畫 mock（避免假資料）；否則先以 mock 立即顯示。
+      if (OWM_AVAILABLE) clear();
+      else draw(mockScalarField(layer, bounds, MOCK_GRID));
       clearTimeout(loadTimer);
       loadTimer = setTimeout(() => {
         getScalarField(layer, bounds)
@@ -93,7 +96,10 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
             setDataMode('live');
           })
           .catch(() => {
-            if (!disposed && t === token) setDataMode('mock');
+            if (disposed || t !== token) return;
+            // 有 OWM 備援則清空畫布改顯示 OWM tile；否則維持 mock。
+            if (OWM_AVAILABLE) clear();
+            setDataMode('mock');
           })
           .finally(() => {
             if (!disposed && t === token) setLoading(false);
@@ -124,11 +130,17 @@ export function ScalarFieldLayer({ layer }: { layer: ScalarLayerId }) {
     };
   }, [map, layer]);
 
+  const usingOwm = dataMode === 'mock' && OWM_AVAILABLE;
   return (
     <>
+      {usingOwm && <OwmTileLayer owmLayer={OWM_LAYER[layer]} />}
       <canvas ref={canvasRef} className="scalar-canvas" />
-      <div className={`radar-badge ${dataMode === 'mock' ? 'is-warn' : ''}`}>
-        {dataMode === 'live' ? '即時資料' : '示意資料(無法連線即時資料)'}
+      <div className={`radar-badge ${dataMode === 'mock' && !OWM_AVAILABLE ? 'is-warn' : ''}`}>
+        {dataMode === 'live'
+          ? '即時資料(Open-Meteo)'
+          : usingOwm
+            ? 'OpenWeatherMap 備援'
+            : '示意資料(無法連線即時資料)'}
       </div>
       <LoadingOverlay visible={loading} />
     </>

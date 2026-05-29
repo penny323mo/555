@@ -5,6 +5,8 @@ import { ParticleEngine } from '@/engine/particleEngine';
 import { MockWindProvider } from '@/services/windField/MockWindProvider';
 import { OpenMeteoWindProvider } from '@/services/windField/OpenMeteoWindProvider';
 import { COLOR_SCALES, sampleColor } from '@/utils/colorScale';
+import { OwmTileLayer } from '@/components/layers/OwmTileLayer';
+import { OWM_AVAILABLE, OWM_LAYER } from '@/config/owm';
 
 // 依裝置調整粒子數與解析度，兼顧手機效能。
 const PARTICLE_COUNT_DESKTOP = 4000;
@@ -57,6 +59,8 @@ export function WindCanvasLayer() {
     let moving = false;
     let disposed = false;
     let reqToken = 0;
+    // 有 OWM 備援時，先不畫 mock 粒子（避免顯示假資料），等真實資料到才畫。
+    let suppress = OWM_AVAILABLE;
 
     // 先以 mock 立即填滿（動畫即時可見），再非同步以真實資料升級。
     const bounds0 = toBounds();
@@ -69,11 +73,20 @@ export function WindCanvasLayer() {
         .then((field) => {
           if (disposed || token !== reqToken) return; // 忽略過期或已卸載的回應。
           engine.reset(field, bounds);
+          if (suppress) {
+            suppress = false; // 真實資料到，恢復粒子。
+            clearCanvas();
+          }
           setDataMode('live');
         })
         .catch(() => {
-          // 真實資料失敗時維持 mock，不中斷動畫。
-          if (!disposed && token === reqToken) setDataMode('mock');
+          if (disposed || token !== reqToken) return;
+          // 有 OWM 備援則停畫粒子、改顯示 OWM tile；否則維持 mock 動畫。
+          if (OWM_AVAILABLE) {
+            suppress = true;
+            clearCanvas();
+          }
+          setDataMode('mock');
         });
     };
     loadField(bounds0);
@@ -82,6 +95,11 @@ export function WindCanvasLayer() {
     const clearCanvas = () => ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     const render = () => {
+      if (suppress) {
+        // 由 OWM tile 顯示，跳過粒子繪製（canvas 保持清空）。
+        raf = requestAnimationFrame(render);
+        return;
+      }
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
 
@@ -154,11 +172,17 @@ export function WindCanvasLayer() {
     };
   }, [map]);
 
+  const usingOwm = dataMode === 'mock' && OWM_AVAILABLE;
   return (
     <>
+      {usingOwm && <OwmTileLayer owmLayer={OWM_LAYER.wind} />}
       <canvas ref={canvasRef} className="wind-canvas" />
-      <div className={`radar-badge ${dataMode === 'mock' ? 'is-warn' : ''}`}>
-        {dataMode === 'live' ? '風・即時資料(地面 10m)' : '風・示意資料(無法連線即時資料)'}
+      <div className={`radar-badge ${dataMode === 'mock' && !OWM_AVAILABLE ? 'is-warn' : ''}`}>
+        {dataMode === 'live'
+          ? '風・即時資料(Open-Meteo 地面 10m)'
+          : usingOwm
+            ? '風・OpenWeatherMap 備援'
+            : '風・示意資料(無法連線即時資料)'}
       </div>
     </>
   );
