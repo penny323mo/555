@@ -16,4 +16,17 @@ export default defineConfig({
     host: true,
     port: 5173,
   },
+  build: {
+    // MapLibre 為已知的大型向量地圖依賴，已獨立成 chunk，提高警告門檻避免雜訊。
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        // 將體積較大的依賴拆成獨立 chunk，改善快取與初次載入。
+        manualChunks: {
+          maplibre: ['maplibre-gl'],
+          react: ['react', 'react-dom'],
+        },
+      },
+    },
+  },
 });
