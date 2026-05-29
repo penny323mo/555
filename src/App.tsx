@@ -3,6 +3,7 @@ import { MapContainer } from '@/components/map/MapContainer';
 import { WindCanvasLayer } from '@/components/map/WindCanvasLayer';
 import { ScalarFieldLayer } from '@/components/layers/ScalarFieldLayer';
 import { RainRadarLayer } from '@/components/layers/RainRadarLayer';
+import { CloudSatelliteLayer } from '@/components/layers/CloudSatelliteLayer';
 import { SearchBar } from '@/components/search/SearchBar';
 import { LayerSwitcher } from '@/components/layers/LayerSwitcher';
 import { Legend } from '@/components/ui/Legend';
@@ -21,6 +22,8 @@ export default function App() {
           <WindCanvasLayer />
         ) : activeLayer === 'rain' ? (
           <RainRadarLayer />
+        ) : activeLayer === 'cloud' ? (
+          <CloudSatelliteLayer />
         ) : (
           <ScalarFieldLayer layer={activeLayer} />
         )}
