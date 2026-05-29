@@ -1,0 +1,54 @@
+:root {
+  --bg-deep: #0e0f12;
+  --bg-panel: rgba(22, 24, 29, 0.92);
+  --accent: #2aa44b;
+  --text: #eaeef3;
+  --text-dim: #9aa3ad;
+  font-family: ui-rounded, system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--text);
+}
+
+.app-shell {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Phase 1 佔位畫面，Phase 2 會由地圖取代。 */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 24px;
+}
+
+.placeholder h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+}
+
+.placeholder p {
+  margin: 0;
+  color: var(--text-dim);
+}

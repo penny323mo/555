@@ -1,0 +1,19 @@
+# 依賴
+node_modules
+dist
+dist-ssr
+
+# 環境變數
+.env
+.env.local
+.env.*.local
+
+# 編輯器 / 系統
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# 日誌
+*.log
+npm-debug.log*
