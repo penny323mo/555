@@ -36,3 +36,17 @@ export const COLOR_SCALES: Record<LayerId, ColorScale> = {
 export function toGradient(scale: ColorScale): string {
   return `linear-gradient(90deg, ${scale.colors.join(', ')})`;
 }
+
+/**
+ * 依數值在 domain 區間內取色階顏色（離散，不做插值，效能優先）。
+ * 供風場粒子上色：speed 對應風速 (m/s)，再以 wind 色階上色。
+ */
+export function sampleColor(scale: ColorScale, value: number): string {
+  const { colors, ticks } = scale;
+  const min = ticks[0];
+  const max = ticks[ticks.length - 1];
+  const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  const idx = Math.min(colors.length - 1, Math.floor(t * colors.length));
+  return colors[idx];
+}
+
