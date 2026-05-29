@@ -10,8 +10,8 @@ import { OWM_AVAILABLE, OWM_LAYER } from '@/config/owm';
 
 // 依裝置調整粒子數與解析度，兼顧手機效能。
 // 參考 Windy：較疏、較幼、半透明、速度適中，避免重疊成團。
-const PARTICLE_COUNT_DESKTOP = 2600;
-const PARTICLE_COUNT_MOBILE = 1100;
+const PARTICLE_COUNT_DESKTOP = 1700;
+const PARTICLE_COUNT_MOBILE = 750;
 // 速度補償基準：在 REF_ZOOM 用 BASE_SPEED，其餘縮放等比調整，
 // 使粒子的螢幕移動速度大致不受 zoom 影響。
 const REF_ZOOM = 4;
@@ -21,8 +21,8 @@ const MIN_VISUAL_SPEED = 1.5;
 // 拖尾保留率（destination-in 每幀乘上的 alpha，越接近 1 拖尾越長）。
 const FADE_ALPHA = 0.93;
 const LINE_WIDTH = 1.1;
-// 線條整體不透明度（半透明，較柔和，不會深色蓋住地圖）。
-const LINE_ALPHA = 0.55;
+// 線條整體不透明度（略透明即可，保留顏色深度）。
+const LINE_ALPHA = 0.85;
 
 // Canvas 風場粒子層：疊在地圖上，粒子以經緯度錨定，每幀投影成螢幕座標繪製。
 export function WindCanvasLayer() {
@@ -62,10 +62,9 @@ export function WindCanvasLayer() {
     let moving = false;
     let disposed = false;
     let reqToken = 0;
-    // 有 OWM 備援時，先不畫 mock 粒子（避免顯示假資料），等真實資料到才畫。
-    let suppress = OWM_AVAILABLE;
+    // 一律先不畫粒子，等真實資料到才顯示，避免開頭閃 mock 再跳成真實。
+    let suppress = true;
 
-    // 先以 mock 立即填滿（動畫即時可見），再非同步以真實資料升級。
     const bounds0 = toBounds();
     const engine = new ParticleEngine(count, fallback.getField(bounds0), bounds0);
     resize();
@@ -76,17 +75,20 @@ export function WindCanvasLayer() {
         .then((field) => {
           if (disposed || token !== reqToken) return; // 忽略過期或已卸載的回應。
           engine.reset(field, bounds);
-          if (suppress) {
-            suppress = false; // 真實資料到，恢復粒子。
-            clearCanvas();
-          }
+          suppress = false; // 真實資料到，顯示粒子。
+          clearCanvas();
           setDataMode('live');
         })
         .catch(() => {
           if (disposed || token !== reqToken) return;
-          // 有 OWM 備援則停畫粒子、改顯示 OWM tile；否則維持 mock 動畫。
+          // 有 OWM 備援：保持不畫粒子，改顯示 OWM tile。
+          // 無 OWM：才退回 mock 動畫（明確標示為示意資料）。
           if (OWM_AVAILABLE) {
             suppress = true;
+            clearCanvas();
+          } else {
+            engine.reset(fallback.getField(bounds), bounds);
+            suppress = false;
             clearCanvas();
           }
           setDataMode('mock');
@@ -143,8 +145,7 @@ export function WindCanvasLayer() {
       cancelAnimationFrame(raf); // moveend 與 zoomend 可能同時觸發，先取消避免重複迴圈。
       resize();
       const bounds = toBounds();
-      // 立即以 mock 重新散佈（避免空窗），動畫不中斷。
-      engine.reset(fallback.getField(bounds), bounds);
+      // 不立即重置成 mock（避免閃假資料）；維持目前粒子直到真實資料到。
       clearCanvas();
       raf = requestAnimationFrame(render);
       // 真實資料請求 debounce：連續拖動只在停下後抓一次，節省 API 額度。

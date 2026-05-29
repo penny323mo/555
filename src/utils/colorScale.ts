@@ -11,7 +11,7 @@ export interface ColorScale {
 
 export const COLOR_SCALES: Record<LayerId, ColorScale> = {
   wind: {
-    colors: ['#9db9d6', '#6f97c9', '#4aa3df', '#3fbf7f', '#f4e04d', '#ef8a3c', '#d6443c'],
+    colors: ['#3a4cc0', '#3f7fd6', '#2bb3c0', '#3fbf7f', '#f4e04d', '#ef8a3c', '#d6443c'],
     ticks: [0, 10, 20, 35, 55, 100],
   },
   temperature: {
