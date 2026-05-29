@@ -1,9 +1,13 @@
 :root {
   --bg-deep: #0e0f12;
   --bg-panel: rgba(22, 24, 29, 0.92);
+  --bg-card: rgba(30, 33, 40, 0.9);
   --accent: #2aa44b;
+  --gold: #d6b36b;
   --text: #eaeef3;
   --text-dim: #9aa3ad;
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   font-family: ui-rounded, system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
 }
 
@@ -30,25 +34,299 @@ body {
   overflow: hidden;
 }
 
-/* Phase 1 佔位畫面，Phase 2 會由地圖取代。 */
-.placeholder {
+/* ===== 地圖 ===== */
+.map-container {
+  position: absolute;
+  inset: 0;
+}
+
+/* ===== 搜尋列（桌面左上浮動）===== */
+.search-bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(360px, calc(100% - 32px));
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.search-bar__icon {
+  opacity: 0.7;
+}
+
+.search-bar__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.search-bar__input::placeholder {
+  color: var(--text-dim);
+}
+
+/* ===== 圖層切換（桌面右側卡片）===== */
+.layer-switcher {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.layer-switcher__list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
-  padding: 24px;
+  gap: 8px;
 }
 
-.placeholder h1 {
-  margin: 0;
-  font-size: 1.6rem;
-  letter-spacing: 0.08em;
+.layer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 120px;
+  padding: 10px 14px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
 }
 
-.placeholder p {
-  margin: 0;
+.layer-card:hover {
+  transform: translateX(-2px);
+}
+
+.layer-card.is-active {
+  border-color: var(--gold);
+}
+
+.layer-card__label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.layer-card__unit {
+  font-size: 12px;
   color: var(--text-dim);
+}
+
+/* 手機浮動按鈕，預設隱藏 */
+.layer-fab {
+  display: none;
+  position: absolute;
+  right: 16px;
+  bottom: 84px;
+  z-index: 12;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: #c0392b;
+  color: #fff;
+  font-size: 22px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+/* ===== 圖例（底部色階）===== */
+.legend {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 10;
+  width: min(420px, calc(100% - 32px));
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.legend__unit {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.legend__bar {
+  height: 10px;
+  border-radius: 5px;
+  margin: 6px 0 4px;
+}
+
+.legend__ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ===== 天氣面板 ===== */
+.weather-panel {
+  position: absolute;
+  left: 16px;
+  bottom: 90px;
+  z-index: 11;
+  width: min(320px, calc(100% - 32px));
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.weather-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.weather-panel__header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.weather-panel__close {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.weather-panel__body {
+  padding: 14px;
+}
+
+.weather-panel__coords {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.weather-panel__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ===== 載入 / 錯誤 ===== */
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+.loading-overlay__spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-toast {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #7a2622;
+  color: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.error-toast__retry {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  color: #fff;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+/* ===== 手機版（窄螢幕）===== */
+@media (max-width: 640px) {
+  .search-bar {
+    width: calc(100% - 32px);
+  }
+
+  .layer-fab {
+    display: block;
+  }
+
+  /* 圖層卡片改為底部抽屜，預設收合 */
+  .layer-switcher {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    background: var(--bg-panel);
+    border-radius: 16px 16px 0 0;
+    box-shadow: var(--shadow);
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .layer-switcher.is-open {
+    transform: translateY(0);
+  }
+
+  .layer-switcher__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .layer-card {
+    flex: 1 1 28%;
+    min-width: 0;
+  }
+
+  .legend {
+    bottom: 8px;
+  }
+
+  .weather-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+  }
 }
