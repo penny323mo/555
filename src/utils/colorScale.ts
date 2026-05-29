@@ -37,6 +37,16 @@ export function toGradient(scale: ColorScale): string {
   return `linear-gradient(90deg, ${scale.colors.join(', ')})`;
 }
 
+/** 解析 #rrggbb 為 [r, g, b]，供 Canvas ImageData 上色。 */
+export function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
 /**
  * 依數值在 domain 區間內取色階顏色（離散，不做插值，效能優先）。
  * 供風場粒子上色：speed 對應風速 (m/s)，再以 wind 色階上色。

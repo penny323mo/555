@@ -40,8 +40,9 @@ body {
   inset: 0;
 }
 
-/* ===== 風場粒子層（疊在地圖上，不攔截互動）===== */
-.wind-canvas {
+/* ===== 資料覆蓋層（風場粒子 / 純量 heatmap，皆不攔截互動）===== */
+.wind-canvas,
+.scalar-canvas {
   position: absolute;
   inset: 0;
   z-index: 5;
