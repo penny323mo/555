@@ -20,3 +20,5 @@ dist-ssr
 # 日誌
 *.log
 npm-debug.log*
+tutorials/spec-driven-dev/.frames/
+tutorials/spec-driven-dev/preview/
