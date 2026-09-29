@@ -83,8 +83,35 @@ def _melo_tts(text: str, lang: str, out_wav: Path) -> None:
     sf.write(str(out_wav), audio.samples, audio.sample_rate, format='WAV')
 
 
-def synthesize(text: str, lang: str, engine: str = 'google') -> Path:
-    """回傳合成好嘅 WAV（24 kHz、mono、s16）路徑；同一句同一引擎只會合成一次。"""
+def _atempo(speed: float) -> str:
+    # 舊版 ffmpeg 嘅 atempo 每級最多 2 倍，串連幾級就可以去到任何倍數
+    parts = []
+    while speed > 2.0:
+        parts.append('atempo=2.0')
+        speed /= 2.0
+    parts.append(f'atempo={speed:.4f}')
+    return ','.join(parts)
+
+
+def synthesize(text: str, lang: str, engine: str = 'google', speed: float = 1.0) -> Path:
+    """回傳合成好嘅 WAV（24 kHz、mono、s16）路徑；同一句同一引擎只會合成一次。
+
+    speed != 1 時用 ffmpeg atempo 加速（唔變音調），加速版同樣快取。
+    """
+    base = _synthesize_base(text, lang, engine)
+    if speed == 1.0:
+        return base
+    out = base.with_name(f'{base.stem}.x{speed:g}.wav')
+    if not out.exists():
+        subprocess.run(
+            [imageio_ffmpeg.get_ffmpeg_exe(), '-y', '-loglevel', 'error', '-i', str(base), '-filter:a', _atempo(speed),
+             '-ac', '1', '-ar', str(SAMPLE_RATE), '-sample_fmt', 's16', str(out)],
+            check=True,
+        )
+    return out
+
+
+def _synthesize_base(text: str, lang: str, engine: str) -> Path:
     said = speech_text(text, lang)
     voice = GOOGLE_LANG[lang] if engine == 'google' else engine
     key = hashlib.sha1(f'{engine}|{voice}|{said}'.encode()).hexdigest()[:16]

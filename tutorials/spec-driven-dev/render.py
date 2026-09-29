@@ -2,6 +2,7 @@
 
 用法：
     pip install playwright imageio-ffmpeg
+    python render.py --lang yue --speed 1.5  # 旁白語速（預設 2 倍）
     python render.py --lang yue              # 廣東話旁白 → spec-driven-dev.yue.mp4
     python render.py --lang cmn              # 普通話旁白 → spec-driven-dev.cmn.mp4
     python render.py --lang cmn --engine melo   # 普通話用離線 MeloTTS（見 tts.py）
@@ -28,7 +29,7 @@ import tts
 
 HERE = Path(__file__).resolve().parent
 FPS = 30
-LEAD, TAIL = 0.25, 0.6  # 每句旁白前後留白（秒）
+LEAD, TAIL = 0.2, 0.45  # 每句旁白前後留白（秒）
 
 
 def reading_seconds(text: str) -> float:
@@ -59,7 +60,7 @@ def build_timeline(page, args):
             if args.silent or args.preview:
                 total = trans + reading_seconds(text)
             else:
-                clip = tts.synthesize(text, args.lang, args.engine)
+                clip = tts.synthesize(text, args.lang, args.engine, args.speed)
                 total = max(trans + 0.8, LEAD + tts.wav_seconds(clip) + TAIL)
                 print(f'  [{si:02}.{k}] {tts.wav_seconds(clip):5.2f}s  {text[:40]}')
             timeline.append({'si': si, 'k': k, 'text': text, 'trans': trans, 'total': frames_ceil(total), 'clip': clip})
@@ -101,6 +102,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--lang', choices=['yue', 'cmn'], default='yue')
     ap.add_argument('--engine', choices=['google', 'melo'], default='google')
+    ap.add_argument('--speed', type=float, default=2.0, help='旁白語速倍數（atempo，唔變音調）')
     ap.add_argument('--silent', action='store_true')
     ap.add_argument('--preview', action='store_true')
     args = ap.parse_args()

@@ -62,7 +62,9 @@ curl -sSLO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sh
 SENSEVOICE_DIR=./sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17 python verify_tts.py --lang yue
 ```
 
-參考基準：廣東話平均約 0.96，普通話約 0.95。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
+**語速**：Google TTS 原速偏慢（每秒約 2.3 個中文字），用戶睇完覺得要快一倍，所以 `--speed` 預設係 2（ffmpeg atempo 加速，唔變音調）。核對同出片要用同一個 `--speed`。
+
+參考基準（2 倍速）：廣東話同普通話平均都約 0.95，同原速差唔多，即係加速後仍然清楚。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
 
 ### 5. 出片 + 驗證
 
@@ -90,7 +92,7 @@ FRAMES_DIR=/tmp/fc python render.py --lang cmn &   # 兩個語言可以並行，
 
 ## 要留意
 
-- **時間軸跟配音長度走**：每句長度 = max(過場 + 0.8 秒, 0.25 秒 + 配音長度 + 0.6 秒)，並對齊到整數格。concat 清單入面最後一格嘅 duration 要包埋嗰 1/30 秒，唔係 67 句會累積約 2 秒偏差，SRT 會同畫面錯開。
+- **時間軸跟配音長度走**：每句長度 = max(過場 + 0.8 秒, 0.2 秒 + 加速後配音長度 + 0.45 秒)，並對齊到整數格。concat 清單入面最後一格嘅 duration 要包埋嗰 1/30 秒，唔係 67 句會累積約 2 秒偏差，SRT 會同畫面錯開。
 - **普通話版嘅畫面文字**仍然係 `scenes.js` 嘅廣東話書面語。要完整本地化，就要另外寫一份畫面文字。
 - **MP4 好大**（10 分鐘約 20 MB）：commit 入 git 之前要提用戶考慮 Git LFS。`.frames/`、`preview/`、`.tts-cache/` 要加入 `.gitignore`。
 - 做完用 `SendUserFile` 將 MP4 同旁白稿傳俾用戶。回覆入面要講清楚用咗邊個 TTS、核對分數同有咩限制。

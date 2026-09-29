@@ -1,6 +1,6 @@
 # 教學影片：Spec-Driven Development × Coding Agent
 
-1080p 教學片（廣東話 10:33、普通話 12:04），有**廣東話**同**普通話**兩個配音版本，用本 repo（天氣地圖）加「°C / °F 切換」做實戰例子。
+1080p 教學片（廣東話約 5:32、普通話約 6:18，旁白 2 倍速），有**廣東話**同**普通話**兩個配音版本，用本 repo（天氣地圖）加「°C / °F 切換」做實戰例子。
 
 | 檔案 | 用途 |
 |---|---|
@@ -35,6 +35,7 @@ python -m playwright install chromium   # 已有 Chromium 可改用 CHROMIUM_PAT
 python render.py --preview        # 每個 step 截一張圖去 preview/，檢查排版
 python render.py --lang yue       # 廣東話版
 python render.py --lang cmn       # 普通話版
+python render.py --lang yue --speed 1.5 # 旁白語速（預設 2 倍，用 ffmpeg atempo，唔變音調）
 python render.py --lang yue --silent   # 唔配音，按字數估時間
 ```
 
@@ -53,8 +54,10 @@ SENSEVOICE_DIR=... python verify_tts.py --lang yue
 
 | 版本 | 平均相似度 | < 0.85 句數 | 備註 |
 |---|---|---|---|
-| 廣東話（Google `yue`） | 0.959 | 1 / 67 | 低分句係 Given/When/Then，屬辨識誤差 |
-| 普通話（Google `zh-TW`） | 0.948 | 4 / 67 | 低分句係產品名、同音字（程式↔城市） |
+| 廣東話 2 倍速（現用） | 0.949 | 4 / 67 | 加速後仍然清楚 |
+| 普通話 2 倍速（現用） | 0.947 | 3 / 67 | |
+| 廣東話（Google `yue`，原速） | 0.959 | 1 / 67 | 低分句係 Given/When/Then，屬辨識誤差 |
+| 普通話（Google `zh-TW`，原速） | 0.948 | 4 / 67 | 低分句係產品名、同音字（程式↔城市） |
 | 普通話（離線 MeloTTS） | 0.816 | 38 / 67 | 只作後備 |
 | 廣東話（離線 sherpa-onnx VITS） | — | — | 英文詞直接略過、發音差，唔建議 |
 
