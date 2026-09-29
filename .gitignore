@@ -23,3 +23,4 @@ npm-debug.log*
 tutorials/spec-driven-dev/.frames/
 tutorials/spec-driven-dev/preview/
 tutorials/spec-driven-dev/.tts-cache/
+__pycache__/
