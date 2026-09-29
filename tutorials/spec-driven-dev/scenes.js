@@ -1,6 +1,11 @@
 // 教學影片嘅唯一內容來源：畫面 + 旁白字幕都喺呢度定義。
 // 每個 scene 有 layout 同 steps；每個 step = 一句旁白字幕。
 // item 嘅 `at` = 喺第幾個 step 出現；`hl` = 喺第幾個 step 被高亮。
+window.META = {
+  slug: 'spec-driven-dev',
+  title: 'Spec-Driven Development × Coding Agent',
+};
+
 window.SCENES = [
   {
     layout: 'title',

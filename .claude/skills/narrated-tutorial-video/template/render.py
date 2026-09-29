@@ -9,7 +9,7 @@
     python render.py --lang cmn --engine melo   # 普通話用離線 MeloTTS（見 tts.py）
     python render.py --lang yue --silent     # 唔配音，用字數估時間
     python render.py --preview               # 只截每個 step 嘅最終畫面去 preview/
-    python render.py --storyboard            # 分鏡 PDF（畫面 + 旁白），配音前俾用戶確認內容
+    python render.py --storyboard            # 分鏡 PDF（每頁 4 張）+ 讀稿 PDF，配音前俾用戶確認內容
 
 可選環境變數：
     CHROMIUM_PATH  指定 Chromium 執行檔（預設用 Playwright 自帶）
@@ -109,31 +109,56 @@ def write_audio(timeline, path: Path):
 
 STORYBOARD_CSS = '''
   body { font-family: 'WenQuanYi Zen Hei', 'Noto Sans CJK TC', sans-serif; margin: 0; color: #1b1e2b; }
-  h1 { font-size: 20px; margin: 0 0 12px; }
-  .scene { page-break-inside: avoid; display: grid; grid-template-columns: 48% 1fr; gap: 14px;
-           margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 12px; }
-  .scene img { width: 100%; border-radius: 6px; }
-  .scene h2 { font-size: 13px; margin: 0 0 4px; color: #4a5ad0; }
-  .scene ol { margin: 0 0 0 18px; padding: 0; font-size: 13px; line-height: 1.55; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .page h1 { font-size: 13px; margin: 0 0 6px; color: #666; font-weight: normal; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  .cell b { display: block; font-size: 12px; color: #4a5ad0; margin-bottom: 3px; }
+  .cell img { width: 100%; border-radius: 4px; display: block; }
+'''
+
+SCRIPT_CSS = '''
+  body { font-family: 'WenQuanYi Zen Hei', 'Noto Sans CJK TC', sans-serif; margin: 0; color: #1b1e2b; }
+  h1 { font-size: 20px; margin: 0 0 14px; }
+  h2 { font-size: 15px; margin: 16px 0 6px; color: #4a5ad0; page-break-after: avoid; }
+  ol { margin: 0 0 0 22px; padding: 0; font-size: 14px; line-height: 1.7; }
 '''
 
 
-def write_storyboard(page, browser, lang, out_pdf: Path):
-    """分鏡 PDF：每個 scene 一張最終畫面 + 嗰段全部旁白，俾用戶喺配音前確認內容。"""
+def _pdf(browser, body: str, css: str, out: Path, landscape: bool):
+    doc = browser.new_page()
+    doc.set_content(f'<meta charset="utf-8"><style>{css}</style>{body}')
+    doc.pdf(path=str(out), format='A4', landscape=landscape, margin={'top': '10mm', 'bottom': '10mm', 'left': '12mm', 'right': '12mm'})
+    doc.close()
+
+
+def write_storyboard(page, browser, lang, stem: str):
+    """配音前俾用戶確認內容：分鏡 PDF（每頁 4 張畫面）+ 讀稿 PDF（按 scene 列旁白），兩份分開出。"""
     counts = page.evaluate('SCENES.map((s) => s.steps.length)')
-    title = page.evaluate("(META.title || META.brand || '').replace(/<[^>]+>/g, '')") if page.evaluate('typeof META') != 'undefined' else ''
-    blocks = []
+    names = page.evaluate("SCENES.map((s) => s.title || s.file || 'Terminal')")
+    title = html.escape(page.evaluate("typeof META !== 'undefined' ? (META.title || META.brand || '').replace(/<[^>]+>/g, '') : ''"))
+
+    cells = []
     for si, n in enumerate(counts):
         page.evaluate(f'renderFrame({si}, {n - 1}, 1, 1, {lang!r})')
         page.evaluate("document.querySelector('#sub').style.visibility = 'hidden'")
-        img = base64.b64encode(page.screenshot(type='jpeg', quality=82)).decode()
+        img = base64.b64encode(page.screenshot(type='jpeg', quality=80)).decode()
         page.evaluate("document.querySelector('#sub').style.visibility = ''")
+        cells.append(f'<div class="cell"><b>Scene {si + 1} · {html.escape(names[si])}</b><img src="data:image/jpeg;base64,{img}"></div>')
+    pages = [
+        f'<div class="page"><h1>{title} — 分鏡（{lang}）{i // 4 + 1}/{(len(cells) + 3) // 4}</h1><div class="grid">{"".join(cells[i:i + 4])}</div></div>'
+        for i in range(0, len(cells), 4)
+    ]
+    board = HERE / f'{stem}.{lang}.storyboard.pdf'
+    _pdf(browser, ''.join(pages), STORYBOARD_CSS, board, landscape=True)
+
+    parts = [f'<h1>{title} — 讀稿（{lang}）</h1>']
+    for si, n in enumerate(counts):
         lines = ''.join(f'<li>{html.escape(page.evaluate(f"stepText({si}, {k}, {lang!r})"))}</li>' for k in range(n))
-        blocks.append(f'<div class="scene"><img src="data:image/jpeg;base64,{img}"><div><h2>Scene {si + 1}</h2><ol>{lines}</ol></div></div>')
-    doc = browser.new_page()
-    doc.set_content(f'<meta charset="utf-8"><style>{STORYBOARD_CSS}</style><h1>{html.escape(title)} — 分鏡（{lang}）</h1>{"".join(blocks)}')
-    doc.pdf(path=str(out_pdf), format='A4', landscape=True, margin={'top': '10mm', 'bottom': '10mm', 'left': '12mm', 'right': '12mm'})
-    print(f'storyboard -> {out_pdf} ({len(counts)} scenes, {sum(counts)} 句旁白)')
+        parts.append(f'<h2>Scene {si + 1} · {html.escape(names[si])}</h2><ol>{lines}</ol>')
+    script = HERE / f'{stem}.{lang}.script.pdf'
+    _pdf(browser, ''.join(parts), SCRIPT_CSS, script, landscape=False)
+    print(f'storyboard -> {board}\nscript     -> {script} ({len(counts)} scenes, {sum(counts)} 句旁白)')
 
 
 def main():
@@ -144,7 +169,7 @@ def main():
     ap.add_argument('--clip', type=float, default=None, metavar='SECONDS', help='只出頭 N 秒試聽片（出成條片前俾用戶確認）')
     ap.add_argument('--silent', action='store_true')
     ap.add_argument('--preview', action='store_true')
-    ap.add_argument('--storyboard', action='store_true', help='只出分鏡 PDF（畫面 + 旁白），俾用戶確認內容先配音')
+    ap.add_argument('--storyboard', action='store_true', help='只出分鏡 PDF + 讀稿 PDF，俾用戶確認內容先配音')
     args = ap.parse_args()
 
     frames_dir = Path(os.environ.get('FRAMES_DIR', HERE / ('preview' if args.preview else '.frames')))
@@ -162,7 +187,7 @@ def main():
 
         if args.storyboard:
             slug = page.evaluate('META.slug') or 'video'
-            write_storyboard(page, browser, args.lang, HERE / f'{slug}.{args.lang}.storyboard.pdf')
+            write_storyboard(page, browser, args.lang, slug)
             browser.close()
             shutil.rmtree(frames_dir, ignore_errors=True)
             return

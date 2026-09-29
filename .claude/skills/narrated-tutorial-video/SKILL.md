@@ -9,7 +9,7 @@ description: 由零生成有廣東話／普通話配音同字幕嘅 1080p 教學
 
 成條片要渲染 5–8 分鐘，改一次內容就要成個重做，所以流程有兩個用戶確認關口，越早發現問題越平：
 
-1. **分鏡確認（內容）**：寫完稿，先出分鏡 PDF（畫面 + 旁白），用戶話內容 OK 先配音
+1. **分鏡確認（內容）**：寫完稿，先出分鏡 PDF 同讀稿 PDF，用戶話內容 OK 先配音
 2. **試聽確認（語速／聲線）**：配完音，先出 10 秒試聽，用戶話 OK 先出成條片
 
 未過關口就唔好行下一步，亦唔好一次過出晒成條片先問。
@@ -58,12 +58,17 @@ python render.py --preview      # 每句一張圖去 preview/
 ### 4. 分鏡確認（關口 1）
 
 ```bash
-python render.py --storyboard --lang yue    # 約 5 秒 → <slug>.yue.storyboard.pdf
+python render.py --storyboard --lang yue    # 約 5 秒 → <slug>.yue.storyboard.pdf + <slug>.yue.script.pdf
 ```
 
-PDF 係橫向 A4，每頁兩個 scene，左邊係最終畫面、右邊列晒嗰段旁白，手機都睇得清楚。用 `SendUserFile` 傳俾用戶，問佢內容、例子、用詞、次序 OK 未。用戶要改就改 `scenes.js` 或者 `narration.cmn.js`，再出一次分鏡，直到用戶確認為止。有普通話版嘅話，兩個語言各出一份。
+會出兩份 PDF，分開出係用戶要求嘅：
 
-`*.storyboard.pdf` 係臨時檔，唔好 commit。
+- **分鏡**：橫向 A4，每頁 4 張畫面（2×2），標住「Scene N · 標題」，用嚟睇版面同視覺
+- **讀稿**：直向 A4，按 Scene N 逐句列旁白，用嚟睇內容同用詞，編號同分鏡對得返
+
+兩份都用 `SendUserFile` 傳俾用戶，問佢內容、例子、用詞、次序 OK 未。用戶要改就改 `scenes.js` 或者 `narration.cmn.js`，再出一次，直到用戶確認為止。有普通話版嘅話，兩個語言各出一套。
+
+`*.storyboard.pdf`、`*.script.pdf` 係臨時檔，唔好 commit。
 
 ### 5. 配音 + 核對讀音
 
