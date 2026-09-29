@@ -109,7 +109,7 @@ curl -sSLO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sh
 SENSEVOICE_DIR=./sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17 python verify_tts.py --lang yue
 ```
 
-**讀音規則（用戶指定）**：`AI` 一律逐個字母讀「A. I.」，包括 `OpenAI`、`xAI` 入面嘅 AI；`tts.py` 嘅 `speech_text()` 已經自動處理，寫稿時照寫「AI」就得，唔好寫成「艾」或者其他諧音。其他英文名讀得唔清楚，就加入 `SAY` 表（例如 Cybercab → Cyber Cab、NVIDIA H100 → 英偉達 H 一百、macOS → mac O S）。SAY 表都救唔到嘅字（例如 Google 廣東話聲讀「Thunderbolt」必錯），就喺 `say` 改用中文講法（「高速線」），`sub` 同畫面照寫原名。
+**讀音規則（用戶指定）**：`AI` 一律逐個字母讀「A. I.」，包括 `OpenAI`、`xAI` 入面嘅 AI；`tts.py` 嘅 `speech_text()` 已經自動處理，寫稿時照寫「AI」就得，唔好寫成「艾」或者其他諧音。其他英文名讀得唔清楚，就加入 `SAY` 表（例如 Cybercab → Cyber Cab、NVIDIA H100 → 英偉達 H 一百、macOS → mac O S、NVIDIA → 英偉達）。**全大寫嘅品牌名（NVIDIA 之類）Google 會逐個字母讀**；寫完稿先用 `grep -o "say: '[^']*'" scenes.js | grep -oE "\b[A-Z][A-Z0-9.-]{2,}\b" | sort | uniq -c` 列出全大寫字，真縮寫（CEO、GPU、FDA）照讀字母，品牌名就加入 `SAY`。SAY 表都救唔到嘅字（例如 Google 廣東話聲讀「Thunderbolt」必錯），就喺 `say` 改用中文講法（「高速線」），`sub` 同畫面照寫原名。
 
 參考基準（1.35 倍速）：廣東話 0.960、普通話 0.952。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
 

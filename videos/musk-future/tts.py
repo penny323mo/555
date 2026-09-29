@@ -32,7 +32,7 @@ GOOGLE_LANG = {'yue': 'yue', 'cmn': 'zh-TW'}
 # 只影響「讀法」，唔影響字幕：符號同檔名改成順口嘅講法
 SAY = {
     'yue': [('°C', '攝氏'), ('°F', '華氏'), ('.claude/commands', '點 claude 斜線 commands'), ('CLAUDE.md', 'CLAUDE 點 MD'),
-            ('Cybercab', 'Cyber Cab'), ('Robotaxi', 'Robo taxi'), ('NVIDIA H100', '英偉達 H 一百')],
+            ('Cybercab', 'Cyber Cab'), ('Robotaxi', 'Robo taxi'), ('NVIDIA H100', '英偉達 H 一百'), ('NVIDIA', '英偉達')],
     'cmn': [('°C', '攝氏'), ('°F', '華氏'), ('.claude/commands', '點 claude 斜線 commands'), ('CLAUDE.md', 'CLAUDE 點 MD')],
 }
 
