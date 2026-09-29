@@ -34,7 +34,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--lang', choices=['yue', 'cmn'], default='yue')
     ap.add_argument('--engine', choices=['google', 'melo'], default='google')
-    ap.add_argument('--speed', type=float, default=2.0, help='旁白語速倍數（atempo，唔變音調）')
+    ap.add_argument('--speed', type=float, default=1.5, help='旁白語速倍數（atempo，唔變音調）')
     ap.add_argument('--threshold', type=float, default=0.85)
     args = ap.parse_args()
 

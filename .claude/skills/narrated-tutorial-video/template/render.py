@@ -2,7 +2,7 @@
 
 用法：
     pip install playwright imageio-ffmpeg
-    python render.py --lang yue --speed 1.5  # 旁白語速（預設 2 倍）
+    python render.py --lang yue --speed 1.8  # 旁白語速（預設 1.5 倍）
     python render.py --lang yue              # 廣東話旁白 → <slug>.yue.mp4
     python render.py --lang cmn              # 普通話旁白 → <slug>.cmn.mp4
     python render.py --lang cmn --engine melo   # 普通話用離線 MeloTTS（見 tts.py）
@@ -103,7 +103,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--lang', choices=['yue', 'cmn'], default='yue')
     ap.add_argument('--engine', choices=['google', 'melo'], default='google')
-    ap.add_argument('--speed', type=float, default=2.0, help='旁白語速倍數（atempo，唔變音調）')
+    ap.add_argument('--speed', type=float, default=1.5, help='旁白語速倍數（atempo，唔變音調）')
     ap.add_argument('--silent', action='store_true')
     ap.add_argument('--preview', action='store_true')
     args = ap.parse_args()

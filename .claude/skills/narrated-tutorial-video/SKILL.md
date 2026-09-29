@@ -62,9 +62,9 @@ curl -sSLO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sh
 SENSEVOICE_DIR=./sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17 python verify_tts.py --lang yue
 ```
 
-**語速**：Google TTS 原速偏慢（每秒約 2.3 個中文字），用戶睇完覺得要快一倍，所以 `--speed` 預設係 2（ffmpeg atempo 加速，唔變音調）。核對同出片要用同一個 `--speed`。
+**語速**：Google TTS 原速偏慢（每秒約 2.3 個中文字），用戶試過：原速太慢、2 倍太快，1.5 倍啱啱好，所以 `--speed` 預設係 1.5（ffmpeg atempo 加速，唔變音調）。改語速之前，先剪頭 5 秒試聽俾用戶確認，先再出成條片。核對同出片要用同一個 `--speed`。
 
-參考基準（2 倍速）：廣東話同普通話平均都約 0.95，同原速差唔多，即係加速後仍然清楚。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
+參考基準（1.5 倍速）：廣東話 0.958、普通話 0.951。原速同 2 倍速都約 0.95，即係加速對清晰度影響好細。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
 
 ### 5. 出片 + 驗證
 
