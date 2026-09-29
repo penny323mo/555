@@ -2,7 +2,8 @@
 
 用法：
     pip install playwright imageio-ffmpeg
-    python render.py --lang yue --speed 1.8  # 旁白語速（預設 1.5 倍）
+    python render.py --lang yue --clip 10    # 先出頭 10 秒試聽，確認咗先出成條片
+    python render.py --lang yue --speed 1.8  # 臨時改語速（Google 預設鎖 1.5 倍）
     python render.py --lang yue              # 廣東話旁白 → spec-driven-dev.yue.mp4
     python render.py --lang cmn              # 普通話旁白 → spec-driven-dev.cmn.mp4
     python render.py --lang cmn --engine melo   # 普通話用離線 MeloTTS（見 tts.py）
@@ -52,8 +53,11 @@ def frames_ceil(sec: float) -> float:
 def build_timeline(page, args):
     counts = page.evaluate('SCENES.map((s) => s.steps.length)')
     timeline = []
+    elapsed = 0.0
     for si, n in enumerate(counts):
         for k in range(n):
+            if args.clip and elapsed >= args.clip:
+                return timeline  # 試聽模式：夠鐘就唔再合成後面嘅句子
             text = page.evaluate(f'stepText({si}, {k}, {args.lang!r})')
             trans = frames_ceil(page.evaluate(f'transitionFor({si}, {k})'))
             clip = None
@@ -64,6 +68,7 @@ def build_timeline(page, args):
                 total = max(trans + 0.8, LEAD + tts.wav_seconds(clip) + TAIL)
                 print(f'  [{si:02}.{k}] {tts.wav_seconds(clip):5.2f}s  {text[:40]}')
             timeline.append({'si': si, 'k': k, 'text': text, 'trans': trans, 'total': frames_ceil(total), 'clip': clip})
+            elapsed += frames_ceil(total)
     return timeline
 
 
@@ -102,12 +107,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--lang', choices=['yue', 'cmn'], default='yue')
     ap.add_argument('--engine', choices=['google', 'melo'], default='google')
-    ap.add_argument('--speed', type=float, default=1.5, help='旁白語速倍數（atempo，唔變音調）')
+    ap.add_argument('--speed', type=float, default=None, help='旁白語速倍數；預設跟引擎（google 鎖 1.5）')
+    ap.add_argument('--clip', type=float, default=None, metavar='SECONDS', help='只出頭 N 秒試聽片（出成條片前俾用戶確認）')
     ap.add_argument('--silent', action='store_true')
     ap.add_argument('--preview', action='store_true')
     args = ap.parse_args()
 
-    out_mp4 = HERE / f'spec-driven-dev.{args.lang}.mp4'
+    out_mp4 = HERE / f"spec-driven-dev.{args.lang}{'.clip' if args.clip else ''}.mp4"
     frames_dir = Path(os.environ.get('FRAMES_DIR', HERE / ('preview' if args.preview else '.frames')))
     shutil.rmtree(frames_dir, ignore_errors=True)
     frames_dir.mkdir(parents=True)
@@ -123,7 +129,7 @@ def main():
 
         timeline = build_timeline(page, args)
         total = sum(st['total'] for st in timeline)
-        if not args.preview:
+        if not args.preview and not args.clip:
             write_srt_and_script(timeline, page, args.lang)
         print(f'{len(timeline)} steps, {total:.1f}s ({total / 60:.1f} min)')
 
@@ -169,7 +175,7 @@ def main():
         '-f', 'concat', '-safe', '0', '-i', str(list_file), *audio_in,
         '-vf', f'fps={FPS},format=yuv420p',
         '-c:v', 'libx264', '-preset', 'slow', '-crf', '22', '-tune', 'stillimage',
-        '-c:a', 'aac', '-b:a', '96k', '-shortest',
+        '-c:a', 'aac', '-b:a', '96k', '-shortest', *(['-t', str(args.clip)] if args.clip else []),
         '-movflags', '+faststart', str(out_mp4),
     ]
     subprocess.run(cmd, check=True)

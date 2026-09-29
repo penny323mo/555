@@ -23,6 +23,10 @@ import imageio_ffmpeg
 SAMPLE_RATE = 24000
 CACHE = Path(__file__).resolve().parent / '.tts-cache'
 
+# 預設語速：Google TTS 原速偏慢，1.5 倍先係人正常聽嘅語速（用戶試過原速太慢、2 倍太快）。
+# 係逐句加速後先排時間軸，所以字幕同畫面一定跟得上，唔使出片後再成條片調速。
+DEFAULT_SPEED = {'google': 1.5, 'melo': 1.0}
+
 GOOGLE_LANG = {'yue': 'yue', 'cmn': 'zh-TW'}
 
 # 只影響「讀法」，唔影響字幕：符號同檔名改成順口嘅講法
@@ -93,11 +97,13 @@ def _atempo(speed: float) -> str:
     return ','.join(parts)
 
 
-def synthesize(text: str, lang: str, engine: str = 'google', speed: float = 1.0) -> Path:
+def synthesize(text: str, lang: str, engine: str = 'google', speed: float | None = None) -> Path:
     """回傳合成好嘅 WAV（24 kHz、mono、s16）路徑；同一句同一引擎只會合成一次。
 
-    speed != 1 時用 ffmpeg atempo 加速（唔變音調），加速版同樣快取。
+    speed 預設跟 DEFAULT_SPEED；!= 1 時用 ffmpeg atempo 加速（唔變音調），加速版同樣快取。
     """
+    if speed is None:
+        speed = DEFAULT_SPEED[engine]
     base = _synthesize_base(text, lang, engine)
     if speed == 1.0:
         return base

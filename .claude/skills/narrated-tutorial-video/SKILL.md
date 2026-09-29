@@ -48,13 +48,13 @@ python render.py --preview      # 每句一張圖去 preview/
 - 文字有冇爆出窗口，或者壓住底部字幕（>4 個 item 會自動 compact；file 超過 16 行會自動縮字）
 - 仲係爆就刪行或者拆 scene，唔好一味縮字
 
-### 4. 配音 + 核對
+### 4. 配音 + 核對讀音
 
-```bash
-python render.py --lang yue     # 會先逐句合成（快取喺 .tts-cache/），再渲染
-```
+語速已經鎖死：Google TTS 固定用 **1.5 倍**（`tts.py` 嘅 `DEFAULT_SPEED`）。用戶試過原速太慢、2 倍太快，1.5 倍先係人正常聽嘅語速，所以唔使再問用戶要幾快，除非佢主動要求（`--speed` 可以臨時覆蓋）。
 
-想先核對讀音、唔渲染，可以跑 `verify_tts.py`：佢會用 SenseVoice 將每句配音辨識返做文字，再同原稿比相似度。你自己聽唔到聲，呢個係唯一客觀嘅檢查方法：
+加速係逐句做（ffmpeg atempo，唔變音調），做完先按加速後嘅長度排畫面同字幕，所以一定同步。唔好出完片先成條片調速：咁樣會連動畫、過場、字幕顯示時間一齊壓縮，字幕會閃得太快。
+
+用 `verify_tts.py` 核對讀音：佢用 SenseVoice 將每句配音辨識返做文字，再同原稿比相似度。你自己聽唔到聲，呢個係唯一客觀嘅檢查方法：
 
 ```bash
 pip install sherpa-onnx soundfile opencc-python-reimplemented
@@ -62,11 +62,19 @@ curl -sSLO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sh
 SENSEVOICE_DIR=./sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17 python verify_tts.py --lang yue
 ```
 
-**語速**：Google TTS 原速偏慢（每秒約 2.3 個中文字），用戶試過：原速太慢、2 倍太快，1.5 倍啱啱好，所以 `--speed` 預設係 1.5（ffmpeg atempo 加速，唔變音調）。改語速之前，先剪頭 5 秒試聽俾用戶確認，先再出成條片。核對同出片要用同一個 `--speed`。
+參考基準（1.5 倍速）：廣東話 0.958、普通話 0.951。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
 
-參考基準（1.5 倍速）：廣東話 0.958、普通話 0.951。原速同 2 倍速都約 0.95，即係加速對清晰度影響好細。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
+### 5. 先出試聽，用戶確認咗先出成條片
 
-### 5. 出片 + 驗證
+成條片要渲染 5–8 分鐘，所以正式出片前，一定要先出 5–10 秒試聽，用 `SendUserFile` 傳俾用戶，問「語速、聲線、畫面 OK 未？」。用戶確認咗先做第 6 步；用戶要改就改完再出一次試聽。
+
+```bash
+python render.py --lang yue --clip 10    # 約 10 秒就出到 → <slug>.yue.clip.mp4（唔會覆蓋 SRT）
+```
+
+兩個語言都要做就各出一段。`*.clip.mp4` 係臨時檔，唔好 commit。
+
+### 6. 出成條片 + 驗證
 
 ```bash
 FRAMES_DIR=/tmp/fy python render.py --lang yue &
@@ -74,14 +82,15 @@ FRAMES_DIR=/tmp/fc python render.py --lang cmn &   # 兩個語言可以並行，
 ```
 
 出完片要驗證：
-- 用 ffmpeg 睇長度同有冇音軌
+- 用 ffmpeg 睇長度同有冇音軌，長度應該等於 SRT 最後一句嘅結束時間
 - 喺 SRT 揀開頭、中段、結尾各一句，用 ffmpeg `-ss/-t` 切嗰段聲出嚟做 ASR，確認辨識出嚟嘅文字同字幕一致，即係聲畫同步
+- ffmpeg 未寫完 MP4 之前唔好 commit（encode 緊嘅檔案係壞嘅）
 
 ## TTS 引擎（按環境揀）
 
 | 引擎 | 點用 | 備註 |
 |---|---|---|
-| Google 翻譯 TTS（預設） | `tts.py` 已實作，`translate.googleapis.com/translate_tts`，`tl=yue` / `zh-TW` | 免 key、質素好；非官方端點，公開發佈要講清楚 |
+| Google 翻譯 TTS（預設，鎖 1.5 倍速） | `tts.py` 已實作，`translate.googleapis.com/translate_tts`，`tl=yue` / `zh-TW` | 免 key、質素好；非官方端點，公開發佈要講清楚 |
 | sherpa-onnx MeloTTS（離線） | `--engine melo` + `MELO_DIR` | 只有普通話，約 0.82，後備 |
 | sherpa-onnx 廣東話 VITS | 唔建議 | 英文詞直接跳過，發音差 |
 | Azure Speech / Google Cloud TTS / CosyVoice | 喺 `tts.py` 加一個函數輸出 WAV | 公開發佈首選，要 key 或者 GPU |

@@ -34,7 +34,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--lang', choices=['yue', 'cmn'], default='yue')
     ap.add_argument('--engine', choices=['google', 'melo'], default='google')
-    ap.add_argument('--speed', type=float, default=1.5, help='旁白語速倍數（atempo，唔變音調）')
+    ap.add_argument('--speed', type=float, default=None, help='旁白語速倍數；預設跟引擎（google = 1.5）')
     ap.add_argument('--threshold', type=float, default=0.85)
     args = ap.parse_args()
 
@@ -66,7 +66,7 @@ def main():
         if score < args.threshold:
             flagged.append((si, k, score, text, heard))
 
-    print(f'{args.lang}/{args.engine} x{args.speed:g}: {len(texts)} 句，平均相似度 {sum(scores) / len(scores):.3f}，低於 {args.threshold} 嘅有 {len(flagged)} 句')
+    print(f'{args.lang}/{args.engine} x{args.speed or tts.DEFAULT_SPEED[args.engine]:g}: {len(texts)} 句，平均相似度 {sum(scores) / len(scores):.3f}，低於 {args.threshold} 嘅有 {len(flagged)} 句')
     for si, k, score, text, heard in flagged:
         print(f'\n[{si:02}.{k}] {score:.2f}\n  原文：{text}\n  聽到：{heard}')
 

@@ -35,7 +35,7 @@ python -m playwright install chromium   # 已有 Chromium 可改用 CHROMIUM_PAT
 python render.py --preview        # 每個 step 截一張圖去 preview/，檢查排版
 python render.py --lang yue       # 廣東話版
 python render.py --lang cmn       # 普通話版
-python render.py --lang yue --speed 1.5 # 旁白語速（預設 1.5 倍，用 ffmpeg atempo，唔變音調）
+python render.py --lang yue --clip 10  # 先出頭 10 秒試聽（旁白固定 1.5 倍速，--speed 可臨時覆蓋）
 python render.py --lang yue --silent   # 唔配音，按字數估時間
 ```
 
