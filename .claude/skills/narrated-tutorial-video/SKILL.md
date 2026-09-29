@@ -154,3 +154,4 @@ FRAMES_DIR=/tmp/fc python render.py --lang cmn &   # 兩個語言可以並行，
 - **普通話版**：畫面文字本身已經係書面語，所以普通話版通用；`narration.cmn.js` 只需要寫旁白（字串即可）。用戶冇要求就唔使做普通話版。
 - **MP4 好大**（10 分鐘約 20 MB）：commit 入 git 之前要提用戶考慮 Git LFS。`.frames/`、`preview/`、`.tts-cache/` 要加入 `.gitignore`。
 - 做完用 `SendUserFile` 將 MP4 同旁白稿傳俾用戶。回覆入面要講清楚用咗邊個 TTS、核對分數同有咩限制。
+- `SendUserFile` 上限 30 MiB：超過就喺 scratchpad 另存一個壓縮版再傳（repo 入面保留原檔），例如 `ffmpeg -i in.mp4 -c:v libx264 -b:v 170k -maxrate 400k -bufsize 800k -tune stillimage -c:a copy -movflags +faststart out.mp4`（13 分鐘約 25 MB，字仍然清晰）。
