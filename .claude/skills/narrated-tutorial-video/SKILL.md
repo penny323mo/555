@@ -7,6 +7,13 @@ description: 由零生成有廣東話／普通話配音同字幕嘅 1080p 教學
 
 用 HTML 做畫面、Playwright 逐格截圖、TTS 逐句配音、ffmpeg 合成。內容同時間軸全部由一個 `scenes.js` 控制，改稿之後重跑就得，唔使剪片軟件。
 
+成條片要渲染 5–8 分鐘，改一次內容就要成個重做，所以流程有兩個用戶確認關口，越早發現問題越平：
+
+1. **分鏡確認（內容）**：寫完稿，先出分鏡 PDF（畫面 + 旁白），用戶話內容 OK 先配音
+2. **試聽確認（語速／聲線）**：配完音，先出 10 秒試聽，用戶話 OK 先出成條片
+
+未過關口就唔好行下一步，亦唔好一次過出晒成條片先問。
+
 ```
 scenes.js（畫面 + 廣東話旁白）──┐
 narration.cmn.js（普通話旁白）──┼─> slides.html ─> render.py ─> <slug>.yue.mp4 / .cmn.mp4
@@ -48,7 +55,17 @@ python render.py --preview      # 每句一張圖去 preview/
 - 文字有冇爆出窗口，或者壓住底部字幕（>4 個 item 會自動 compact；file 超過 16 行會自動縮字）
 - 仲係爆就刪行或者拆 scene，唔好一味縮字
 
-### 4. 配音 + 核對讀音
+### 4. 分鏡確認（關口 1）
+
+```bash
+python render.py --storyboard --lang yue    # 約 5 秒 → <slug>.yue.storyboard.pdf
+```
+
+PDF 係橫向 A4，每頁兩個 scene，左邊係最終畫面、右邊列晒嗰段旁白，手機都睇得清楚。用 `SendUserFile` 傳俾用戶，問佢內容、例子、用詞、次序 OK 未。用戶要改就改 `scenes.js` 或者 `narration.cmn.js`，再出一次分鏡，直到用戶確認為止。有普通話版嘅話，兩個語言各出一份。
+
+`*.storyboard.pdf` 係臨時檔，唔好 commit。
+
+### 5. 配音 + 核對讀音
 
 語速已經鎖死：Google TTS 固定用 **1.5 倍**（`tts.py` 嘅 `DEFAULT_SPEED`）。用戶試過原速太慢、2 倍太快，1.5 倍先係人正常聽嘅語速，所以唔使再問用戶要幾快，除非佢主動要求（`--speed` 可以臨時覆蓋）。
 
@@ -64,7 +81,7 @@ SENSEVOICE_DIR=./sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17 python verif
 
 參考基準（1.5 倍速）：廣東話 0.958、普通話 0.951。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
 
-### 5. 先出試聽，用戶確認咗先出成條片
+### 6. 試聽確認（關口 2）
 
 成條片要渲染 5–8 分鐘，所以正式出片前，一定要先出 5–10 秒試聽，用 `SendUserFile` 傳俾用戶，問「語速、聲線、畫面 OK 未？」。用戶確認咗先做第 6 步；用戶要改就改完再出一次試聽。
 
@@ -74,7 +91,7 @@ python render.py --lang yue --clip 10    # 約 10 秒就出到 → <slug>.yue.cl
 
 兩個語言都要做就各出一段。`*.clip.mp4` 係臨時檔，唔好 commit。
 
-### 6. 出成條片 + 驗證
+### 7. 出成條片 + 驗證
 
 ```bash
 FRAMES_DIR=/tmp/fy python render.py --lang yue &

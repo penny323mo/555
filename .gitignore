@@ -25,3 +25,4 @@ tutorials/spec-driven-dev/preview/
 tutorials/spec-driven-dev/.tts-cache/
 __pycache__/
 tutorials/spec-driven-dev/*.clip.mp4
+tutorials/spec-driven-dev/*.storyboard.pdf

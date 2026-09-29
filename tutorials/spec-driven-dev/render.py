@@ -9,6 +9,7 @@
     python render.py --lang cmn --engine melo   # 普通話用離線 MeloTTS（見 tts.py）
     python render.py --lang yue --silent     # 唔配音，用字數估時間
     python render.py --preview               # 只截每個 step 嘅最終畫面去 preview/
+    python render.py --storyboard            # 分鏡 PDF（畫面 + 旁白），配音前俾用戶確認內容
 
 可選環境變數：
     CHROMIUM_PATH  指定 Chromium 執行檔（預設用 Playwright 自帶）
@@ -16,6 +17,8 @@
 """
 
 import argparse
+import base64
+import html
 import math
 import os
 import shutil
@@ -103,6 +106,35 @@ def write_audio(timeline, path: Path):
             out.writeframes(body + b'\0' * (n_total * 2 - len(body)))
 
 
+STORYBOARD_CSS = '''
+  body { font-family: 'WenQuanYi Zen Hei', 'Noto Sans CJK TC', sans-serif; margin: 0; color: #1b1e2b; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  .scene { page-break-inside: avoid; display: grid; grid-template-columns: 48% 1fr; gap: 14px;
+           margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 12px; }
+  .scene img { width: 100%; border-radius: 6px; }
+  .scene h2 { font-size: 13px; margin: 0 0 4px; color: #4a5ad0; }
+  .scene ol { margin: 0 0 0 18px; padding: 0; font-size: 13px; line-height: 1.55; }
+'''
+
+
+def write_storyboard(page, browser, lang, out_pdf: Path):
+    """分鏡 PDF：每個 scene 一張最終畫面 + 嗰段全部旁白，俾用戶喺配音前確認內容。"""
+    counts = page.evaluate('SCENES.map((s) => s.steps.length)')
+    title = page.evaluate("(META.title || META.brand || '').replace(/<[^>]+>/g, '')") if page.evaluate('typeof META') != 'undefined' else ''
+    blocks = []
+    for si, n in enumerate(counts):
+        page.evaluate(f'renderFrame({si}, {n - 1}, 1, 1, {lang!r})')
+        page.evaluate("document.querySelector('#sub').style.visibility = 'hidden'")
+        img = base64.b64encode(page.screenshot(type='jpeg', quality=82)).decode()
+        page.evaluate("document.querySelector('#sub').style.visibility = ''")
+        lines = ''.join(f'<li>{html.escape(page.evaluate(f"stepText({si}, {k}, {lang!r})"))}</li>' for k in range(n))
+        blocks.append(f'<div class="scene"><img src="data:image/jpeg;base64,{img}"><div><h2>Scene {si + 1}</h2><ol>{lines}</ol></div></div>')
+    doc = browser.new_page()
+    doc.set_content(f'<meta charset="utf-8"><style>{STORYBOARD_CSS}</style><h1>{html.escape(title)} — 分鏡（{lang}）</h1>{"".join(blocks)}')
+    doc.pdf(path=str(out_pdf), format='A4', landscape=True, margin={'top': '10mm', 'bottom': '10mm', 'left': '12mm', 'right': '12mm'})
+    print(f'storyboard -> {out_pdf} ({len(counts)} scenes, {sum(counts)} 句旁白)')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--lang', choices=['yue', 'cmn'], default='yue')
@@ -111,6 +143,7 @@ def main():
     ap.add_argument('--clip', type=float, default=None, metavar='SECONDS', help='只出頭 N 秒試聽片（出成條片前俾用戶確認）')
     ap.add_argument('--silent', action='store_true')
     ap.add_argument('--preview', action='store_true')
+    ap.add_argument('--storyboard', action='store_true', help='只出分鏡 PDF（畫面 + 旁白），俾用戶確認內容先配音')
     args = ap.parse_args()
 
     out_mp4 = HERE / f"spec-driven-dev.{args.lang}{'.clip' if args.clip else ''}.mp4"
@@ -126,6 +159,13 @@ def main():
         page = browser.new_page(viewport={'width': 1920, 'height': 1080})
         page.goto((HERE / 'slides.html').as_uri())
         page.evaluate('document.fonts.ready')
+
+        if args.storyboard:
+            slug = page.evaluate("typeof META !== 'undefined' && META.slug") or 'spec-driven-dev'
+            write_storyboard(page, browser, args.lang, HERE / f'{slug}.{args.lang}.storyboard.pdf')
+            browser.close()
+            shutil.rmtree(frames_dir, ignore_errors=True)
+            return
 
         timeline = build_timeline(page, args)
         total = sum(st['total'] for st in timeline)
