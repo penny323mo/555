@@ -23,9 +23,9 @@ import imageio_ffmpeg
 SAMPLE_RATE = 24000
 CACHE = Path(__file__).resolve().parent / '.tts-cache'
 
-# 預設語速：Google TTS 原速偏慢，1.5 倍先係人正常聽嘅語速（用戶試過原速太慢、2 倍太快）。
+# 預設語速：Google TTS 原速偏慢，1.35 倍先係人正常聽嘅語速（用戶試過 1、1.25、1.5、2 倍，揀咗 1.35）。
 # 係逐句加速後先排時間軸，所以字幕同畫面一定跟得上，唔使出片後再成條片調速。
-DEFAULT_SPEED = {'google': 1.5, 'melo': 1.0}
+DEFAULT_SPEED = {'google': 1.35, 'melo': 1.0}
 
 GOOGLE_LANG = {'yue': 'yue', 'cmn': 'zh-TW'}
 

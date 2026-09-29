@@ -1,6 +1,6 @@
 # 教學影片：Spec-Driven Development × Coding Agent
 
-1080p 教學片（廣東話約 7:08、普通話約 8:09，旁白 1.5 倍速），有**廣東話**同**普通話**兩個配音版本，用本 repo（天氣地圖）加「°C / °F 切換」做實戰例子。
+1080p 教學片（廣東話約 7:51、普通話約 8:58，旁白 1.35 倍速），有**廣東話**同**普通話**兩個配音版本，用本 repo（天氣地圖）加「°C / °F 切換」做實戰例子。
 
 | 檔案 | 用途 |
 |---|---|
@@ -36,7 +36,7 @@ python render.py --preview        # 每個 step 截一張圖去 preview/，檢�
 python render.py --storyboard     # 分鏡 PDF（每頁 4 張）+ 讀稿 PDF，配音前確認內容
 python render.py --lang yue       # 廣東話版
 python render.py --lang cmn       # 普通話版
-python render.py --lang yue --clip 10  # 先出頭 10 秒試聽（旁白固定 1.5 倍速，--speed 可臨時覆蓋）
+python render.py --lang yue --clip 10  # 先出頭 10 秒試聽（旁白固定 1.35 倍速，--speed 可臨時覆蓋）
 python render.py --lang yue --silent   # 唔配音，按字數估時間
 ```
 
@@ -55,8 +55,10 @@ SENSEVOICE_DIR=... python verify_tts.py --lang yue
 
 | 版本 | 平均相似度 | < 0.85 句數 | 備註 |
 |---|---|---|---|
-| 廣東話 1.5 倍速（現用） | 0.958 | 1 / 67 | |
-| 普通話 1.5 倍速（現用） | 0.951 | 2 / 67 | |
+| 廣東話 1.35 倍速（現用） | 0.960 | 1 / 67 | |
+| 普通話 1.35 倍速（現用） | 0.952 | 3 / 67 | |
+| 廣東話 1.5 倍速 | 0.958 | 1 / 67 | |
+| 普通話 1.5 倍速 | 0.951 | 2 / 67 | |
 | 廣東話 2 倍速 | 0.949 | 4 / 67 | 用戶覺得太快 |
 | 普通話 2 倍速 | 0.947 | 3 / 67 | |
 | 廣東話（Google `yue`，原速） | 0.959 | 1 / 67 | 低分句係 Given/When/Then，屬辨識誤差 |

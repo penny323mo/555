@@ -72,7 +72,7 @@ python render.py --storyboard --lang yue    # 約 5 秒 → <slug>.yue.storyboar
 
 ### 5. 配音 + 核對讀音
 
-語速已經鎖死：Google TTS 固定用 **1.5 倍**（`tts.py` 嘅 `DEFAULT_SPEED`）。用戶試過原速太慢、2 倍太快，1.5 倍先係人正常聽嘅語速，所以唔使再問用戶要幾快，除非佢主動要求（`--speed` 可以臨時覆蓋）。
+語速已經鎖死：Google TTS 固定用 **1.35 倍**（`tts.py` 嘅 `DEFAULT_SPEED`）。用戶試過 1、1.25、1.5、2 倍，1.35 倍先係人正常聽嘅語速，所以唔使再問用戶要幾快，除非佢主動要求（`--speed` 可以臨時覆蓋）。
 
 加速係逐句做（ffmpeg atempo，唔變音調），做完先按加速後嘅長度排畫面同字幕，所以一定同步。唔好出完片先成條片調速：咁樣會連動畫、過場、字幕顯示時間一齊壓縮，字幕會閃得太快。
 
@@ -84,7 +84,7 @@ curl -sSLO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sh
 SENSEVOICE_DIR=./sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17 python verify_tts.py --lang yue
 ```
 
-參考基準（1.5 倍速）：廣東話 0.958、普通話 0.951。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
+參考基準（1.35 倍速）：廣東話 0.960、普通話 0.952。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
 
 ### 6. 試聽確認（關口 2）
 
@@ -112,7 +112,7 @@ FRAMES_DIR=/tmp/fc python render.py --lang cmn &   # 兩個語言可以並行，
 
 | 引擎 | 點用 | 備註 |
 |---|---|---|
-| Google 翻譯 TTS（預設，鎖 1.5 倍速） | `tts.py` 已實作，`translate.googleapis.com/translate_tts`，`tl=yue` / `zh-TW` | 免 key、質素好；非官方端點，公開發佈要講清楚 |
+| Google 翻譯 TTS（預設，鎖 1.35 倍速） | `tts.py` 已實作，`translate.googleapis.com/translate_tts`，`tl=yue` / `zh-TW` | 免 key、質素好；非官方端點，公開發佈要講清楚 |
 | sherpa-onnx MeloTTS（離線） | `--engine melo` + `MELO_DIR` | 只有普通話，約 0.82，後備 |
 | sherpa-onnx 廣東話 VITS | 唔建議 | 英文詞直接跳過，發音差 |
 | Azure Speech / Google Cloud TTS / CosyVoice | 喺 `tts.py` 加一個函數輸出 WAV | 公開發佈首選，要 key 或者 GPU |
