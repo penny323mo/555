@@ -48,7 +48,7 @@ def main():
         browser = p.chromium.launch(**opts)
         page = browser.new_page()
         page.goto((HERE / 'slides.html').as_uri())
-        texts = page.evaluate(f'SCENES.flatMap((s, si) => s.steps.map((_, k) => [si, k, stepText(si, k, {args.lang!r})]))')
+        texts = page.evaluate(f'SCENES.flatMap((s, si) => s.steps.map((_, k) => [si, k, speechText(si, k, {args.lang!r})]))')
         browser.close()
 
     scores, flagged = [], []

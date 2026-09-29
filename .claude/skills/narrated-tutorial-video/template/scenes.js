@@ -1,4 +1,6 @@
 // 影片唯一內容來源：畫面 + 廣東話旁白（每個 step = 一句旁白 = 一句字幕）。
+// step 可以係字串，或者 { say, sub }：say = 配音讀嘅廣東話口語，sub = 畫面字幕嘅書面語（預設要咁寫）。
+// 畫面上嘅文字（標題、item、卡片）一律用書面語。
 // item 嘅 `at` = 喺第幾個 step（0 起）出現；flow 嘅 `hl` = 喺第幾個 step 高亮。
 window.META = {
   slug: 'my-tutorial', // 輸出檔名：my-tutorial.yue.mp4
@@ -13,7 +15,10 @@ window.SCENES = [
     title: 'Demo Tutorial',
     subtitle: '一句副標題',
     chips: ['Tag 1', 'Tag 2'],
-    steps: ['歡迎收睇，呢個係示範影片。', '下面逐一示範每種版面。'],
+    steps: [
+      { say: '歡迎收睇，呢個係示範影片。', sub: '歡迎收看，這是示範影片。' },
+      { say: '下面逐一示範每種版面。', sub: '以下逐一示範各種版面。' },
+    ],
   },
   {
     layout: 'bullets',
@@ -81,6 +86,38 @@ window.SCENES = [
       { at: 1, text: '- 重點規則', strong: true },
     ],
     steps: ['左邊係檔案樹。', '右邊係規則。'],
+  },
+  {
+    layout: 'stats',
+    kicker: '數字',
+    title: '數字卡版面',
+    items: [
+      { at: 1, value: '415', unit: 'TWh', label: '大數字 + 單位', source: '資料來源' },
+      { at: 2, value: '瓶頸', label: '數字以外亦可放短詞', color: 3 },
+    ],
+    steps: ['數字卡版面。', '每張卡逐一出現。', '可以指定顏色。'],
+  },
+  {
+    layout: 'compare',
+    kicker: '對比',
+    title: '左右對比版面',
+    left: { title: '🌍 甲方案', at: 1, items: [{ at: 1, text: '左邊要點' }] },
+    right: { title: '🛰️ 乙方案', at: 2, items: [{ at: 2, text: '右邊要點' }] },
+    steps: ['左右對比版面。', '左邊先出。', '右邊後出。'],
+  },
+  {
+    layout: 'hub',
+    kicker: '關係',
+    title: '放射圖版面',
+    center: '中心\n主題',
+    tag: '可選：角標',
+    nodes: [
+      { at: 1, icon: '🚗', title: '節點一', text: '說明' },
+      { at: 1, icon: '🛰️', title: '節點二', text: '說明' },
+      { at: 2, icon: '🧠', title: '節點三', text: '說明' },
+      { at: 2, icon: '💬', title: '節點四', text: '說明' },
+    ],
+    steps: ['放射圖版面。', '節點可以分批出現。', '最多建議六個節點。'],
   },
   {
     layout: 'outro',

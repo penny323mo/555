@@ -61,13 +61,14 @@ def build_timeline(page, args):
         for k in range(n):
             if args.clip and elapsed >= args.clip:
                 return timeline  # 試聽模式：夠鐘就唔再合成後面嘅句子
-            text = page.evaluate(f'stepText({si}, {k}, {args.lang!r})')
+            text = page.evaluate(f'stepText({si}, {k}, {args.lang!r})')  # 字幕（書面語）
+            say = page.evaluate(f'speechText({si}, {k}, {args.lang!r})')  # 配音（口語）
             trans = frames_ceil(page.evaluate(f'transitionFor({si}, {k})'))
             clip = None
             if args.silent or args.preview:
                 total = trans + reading_seconds(text)
             else:
-                clip = tts.synthesize(text, args.lang, args.engine, args.speed)
+                clip = tts.synthesize(say, args.lang, args.engine, args.speed)
                 total = max(trans + 0.8, LEAD + tts.wav_seconds(clip) + TAIL)
                 print(f'  [{si:02}.{k}] {tts.wav_seconds(clip):5.2f}s  {text[:40]}')
             timeline.append({'si': si, 'k': k, 'text': text, 'trans': trans, 'total': frames_ceil(total), 'clip': clip})
@@ -122,6 +123,8 @@ SCRIPT_CSS = '''
   h1 { font-size: 20px; margin: 0 0 14px; }
   h2 { font-size: 15px; margin: 16px 0 6px; color: #4a5ad0; page-break-after: avoid; }
   ol { margin: 0 0 0 22px; padding: 0; font-size: 14px; line-height: 1.7; }
+  li { margin-bottom: 4px; }
+  .sub { font-size: 12px; color: #6b7090; line-height: 1.5; }
 '''
 
 
@@ -154,7 +157,13 @@ def write_storyboard(page, browser, lang, stem: str):
 
     parts = [f'<h1>{title} — 讀稿（{lang}）</h1>']
     for si, n in enumerate(counts):
-        lines = ''.join(f'<li>{html.escape(page.evaluate(f"stepText({si}, {k}, {lang!r})"))}</li>' for k in range(n))
+        items = []
+        for k in range(n):
+            sub = page.evaluate(f'stepText({si}, {k}, {lang!r})')
+            say = page.evaluate(f'speechText({si}, {k}, {lang!r})')
+            extra = f'<div class="sub">字幕：{html.escape(sub)}</div>' if sub != say else ''
+            items.append(f'<li>{html.escape(say)}{extra}</li>')
+        lines = ''.join(items)
         parts.append(f'<h2>Scene {si + 1} · {html.escape(names[si])}</h2><ol>{lines}</ol>')
     script = HERE / f'{stem}.{lang}.script.pdf'
     _pdf(browser, ''.join(parts), SCRIPT_CSS, script, landscape=False)

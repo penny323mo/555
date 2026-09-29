@@ -38,10 +38,21 @@ pip install playwright imageio-ffmpeg
 先諗大綱，通常係：問題 → 概念 → 流程 → 實戰例子 → 陷阱 → 總結。如果係講 repo 相關嘅嘢，實戰例子最好用返用戶自己個 repo 嘅真實檔案同功能，觀眾會覺得切身好多。
 
 - `META`：`slug`（輸出檔名）、`title`、`brand`（左上角）、`stages`（頂部進度 pill）
-- 每個 scene 揀一個 `layout`：`title` / `bullets` / `flow` / `file` / `terminal` / `repo` / `outro`，欄位睇 `template/scenes.js`（逐個版面有示範）
+- 每個 scene 揀一個 `layout`，欄位睇 `template/scenes.js`，每個版面都有示範：
+  - 文字類：`title` / `bullets` / `outro`
+  - 圖像類（優先用，比純清單吸引）：`stats`（大數字卡）/ `compare`（左右對比）/ `hub`（中心 + 放射節點，最多 6 個）/ `flow`（流程）
+  - 技術類：`file` / `terminal` / `repo`
+- 盡量多用圖像類版面，唔好成條片都係清單，觀眾睇得悶
 - `steps`：每句 = 一句旁白 = 一句字幕 = 一個畫面變化。item 用 `at: n` 指定喺第 n 句出現，令畫面跟住講嘢嘅節奏逐步出現
-- 旁白用口語，一句 20–50 字；太長會變兩行字幕，壓到畫面
-- 完整真實範例：`references/example-sdd-scenes.js`（15 scene、67 句）
+- **用字（用戶指定）**：畫面文字同字幕用**書面語**，配音先用**廣東話口語**。每個 step 寫成 `{ say: '口語', sub: '書面語' }`：`say` 係交俾 TTS 讀嘅，`sub` 係顯示喺字幕、SRT 同讀稿入面嘅。標題、item、卡片等畫面文字一律用書面語
+- 口語旁白一句 20–50 字；字幕太長會變兩行，壓到畫面
+- 講真實人物、公司或者時事：數字要上網核對，寫明「資料截至某年某月」；推演同構想要喺畫面標明（例如 `hub` 嘅 `tag: '⚠️ 根據公開資料的推演'`）；題目偏負面嘅，要加一段持平嘅另一面
+- 完整真實範例：`references/example-sdd-scenes.js`（15 scene、67 句，舊式純字串 steps）
+
+**視覺風格（用戶指定）**：淺色背景、大字、有少少色彩但唔過火、唔好太 cyber。模板預設已經係咁：
+- 白卡片配柔和陰影，item 輪流用 5 個重點色（藍、青、橙、粉紅、紫），只用喺邊框同 icon 底色
+- 字幕係白卡深字，42px
+- 唔好改返深藍底細字，嗰種風格用戶試過覺得太暗、唔吸引
 
 普通話版就寫 `narration.cmn.js`，句數要同 `steps` 一一對應。普通話聲線讀句中嘅英文詞好差（"spec" 會讀成 "t"），所以要盡量用中文術語（spec→規格、task→任務、prompt→提示詞），產品名先保留英文。
 
@@ -52,7 +63,8 @@ python render.py --preview      # 每句一張圖去 preview/
 ```
 
 用 PIL 將每個 scene 最後一張砌成 2×2 contact sheet 再睇，特別留意：
-- 文字有冇爆出窗口，或者壓住底部字幕（>4 個 item 會自動 compact；file 超過 16 行會自動縮字）
+- 文字有冇爆出窗口，或者壓住底部字幕（>4 個 item 會自動 compact；file 超過 16 行、樹狀圖超過 9 行會自動縮字）
+- 數字卡嘅數值唔好太長（例如「2,900 萬」就唔好再加單位），否則會超出卡片
 - 仲係爆就刪行或者拆 scene，唔好一味縮字
 
 ### 4. 分鏡確認（關口 1）
@@ -64,7 +76,7 @@ python render.py --storyboard --lang yue    # 約 5 秒 → <slug>.yue.storyboar
 會出兩份 PDF，分開出係用戶要求嘅：
 
 - **分鏡**：橫向 A4，每頁 4 張畫面（2×2），標住「Scene N · 標題」，用嚟睇版面同視覺
-- **讀稿**：直向 A4，按 Scene N 逐句列旁白，用嚟睇內容同用詞，編號同分鏡對得返
+- **讀稿**：直向 A4，按 Scene N 逐句列旁白（口語），下面灰字係對應字幕（書面語），用嚟睇內容同用詞，編號同分鏡對得返
 
 兩份都用 `SendUserFile` 傳俾用戶，問佢內容、例子、用詞、次序 OK 未。用戶要改就改 `scenes.js` 或者 `narration.cmn.js`，再出一次，直到用戶確認為止。有普通話版嘅話，兩個語言各出一套。
 
@@ -124,6 +136,6 @@ FRAMES_DIR=/tmp/fc python render.py --lang cmn &   # 兩個語言可以並行，
 ## 要留意
 
 - **時間軸跟配音長度走**：每句長度 = max(過場 + 0.8 秒, 0.2 秒 + 加速後配音長度 + 0.45 秒)，並對齊到整數格。concat 清單入面最後一格嘅 duration 要包埋嗰 1/30 秒，唔係 67 句會累積約 2 秒偏差，SRT 會同畫面錯開。
-- **普通話版嘅畫面文字**仍然係 `scenes.js` 嘅廣東話書面語。要完整本地化，就要另外寫一份畫面文字。
+- **普通話版**：畫面文字本身已經係書面語，所以普通話版通用；`narration.cmn.js` 只需要寫旁白（字串即可）。用戶冇要求就唔使做普通話版。
 - **MP4 好大**（10 分鐘約 20 MB）：commit 入 git 之前要提用戶考慮 Git LFS。`.frames/`、`preview/`、`.tts-cache/` 要加入 `.gitignore`。
 - 做完用 `SendUserFile` 將 MP4 同旁白稿傳俾用戶。回覆入面要講清楚用咗邊個 TTS、核對分數同有咩限制。
