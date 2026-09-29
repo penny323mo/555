@@ -436,7 +436,7 @@ window.SCENES = [
     ],
     loopText: '一次系統更新，就把 Mac 變成 ==AI 叢集==',
     steps: [
-      { say: '仲有，去年 12 月 macOS 26.2 加咗一個功能：用 Thunderbolt 5 將幾部 Mac 串埋一齊。', sub: '此外，去年 12 月 macOS 26.2 新增功能：以 Thunderbolt 5 ==串連多部 Mac==。' },
+      { say: '仲有，去年 12 月 macOS 26.2 加咗一個功能：用高速線將幾部 Mac 串埋一齊。', sub: '此外，去年 12 月 macOS 26.2 新增功能：以 Thunderbolt 5 ==串連多部 Mac==。' },
       { say: '透過 RDMA 技術，幾部機好似共用一大片記憶體咁，延遲由 300 微秒降到 50 微秒以下。', sub: '透過 RDMA，多部機器如同共用一大片記憶體，延遲由 300 微秒降至 ==50 微秒以下==。' },
       { say: '結果，四部 Mac Studio 串埋，已經行到一萬億參數嘅 Kimi K2 Thinking 模型。', sub: '結果，四部 Mac Studio 串連即可運行==萬億參數==的 Kimi K2 Thinking 模型。' },
     ],
