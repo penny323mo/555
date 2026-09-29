@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>Tutorial Video</title>
+<style>
+  /* 字體分工（先跑 fetch_assets.py 安裝）：
+     標題 = Noto Sans TC 900（有力）；內文 = Noto Sans TC 500；
+     小標題 / 引言 / 結語 = LXGW WenKai TC（霞鶩文楷，手寫溫度）；數字 = Poppins 800。
+     配色：米白底 + 主色藍 + 高亮橙（Vox 式克制）。旁白講緊邊項，邊項就用主色標示。 */
+  :root {
+    --bg: #faf7f2;
+    --card: #ffffff;
+    --line: #e9e4da;
+    --text: #1c2340;
+    --muted: #6a6f85;
+    --accent: #2f5bea;
+    --accent-bg: #e9efff;
+    --soft: #d8dff3;
+    --hl: #e5701a;
+    --hl-bg: #ffe6cf;
+    --bad: #d64545;
+    --bad-soft: #f3c9c9;
+    --good: #1a9c73;
+    --good-soft: #bfe5d6;
+    --shadow: 0 6px 22px rgba(28, 35, 64, 0.07);
+    --head: 'Noto Sans TC', 'WenQuanYi Zen Hei', sans-serif;
+    --sans: 'Noto Sans TC', 'WenQuanYi Zen Hei', 'DejaVu Sans', 'Noto Color Emoji', sans-serif;
+    --hand: 'LXGW WenKai TC', 'Noto Sans TC', 'WenQuanYi Zen Hei', sans-serif;
+    --num: 'Poppins', 'Noto Sans TC', sans-serif;
+    --mono: 'DejaVu Sans Mono', 'WenQuanYi Zen Hei Mono', 'Noto Color Emoji', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background: radial-gradient(760px 760px at 104% -8%, #e6ecfc 0%, rgba(230, 236, 252, 0) 70%),
+      radial-gradient(620px 620px at -6% 108%, #fbe9d8 0%, rgba(251, 233, 216, 0) 70%), var(--bg);
+    color: var(--text); font-family: var(--sans); font-weight: 500;
+  }
+  #stage { position: absolute; inset: 0; }
+  #content { position: absolute; left: 130px; right: 130px; top: 118px; bottom: 215px; }
+
+  #top { position: absolute; top: 42px; left: 130px; right: 130px; display: flex; align-items: center; justify-content: space-between; }
+  #brand { font-size: 26px; color: var(--muted); letter-spacing: 1px; font-family: var(--hand); }
+  #brand b { color: var(--accent); }
+  #stages { display: flex; gap: 10px; }
+  .pill { padding: 8px 18px; border-radius: 999px; background: #fff; border: 2px solid var(--line); color: var(--muted); font-size: 22px; }
+  .pill.done { color: var(--text); }
+  .pill.on { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+  #sub { position: absolute; left: 150px; right: 150px; bottom: 56px; min-height: 110px; display: flex; align-items: center; justify-content: center; }
+  #sub span { background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); padding: 16px 34px; border-radius: 16px; font-size: 42px; line-height: 1.4; text-align: center; font-weight: 500; }
+  #bar { position: absolute; left: 0; bottom: 0; height: 8px; background: var(--accent); }
+
+  mark { background: linear-gradient(transparent 58%, var(--hl-bg) 58%); color: var(--hl); font-weight: 700; padding: 0 2px; }
+  img.fl { display: block; object-fit: contain; filter: drop-shadow(0 10px 18px rgba(28, 35, 64, 0.16)); }
+
+  .kicker { display: inline-flex; align-items: center; gap: 12px; font-family: var(--hand); font-size: 34px; color: var(--accent); font-weight: 700; margin-bottom: 10px; }
+  .kicker::before { content: ''; width: 36px; height: 6px; border-radius: 3px; background: var(--hl); }
+  h1 { font-family: var(--head); font-size: 76px; font-weight: 900; margin-bottom: 38px; letter-spacing: 1px; line-height: 1.15; }
+  .quote { font-family: var(--hand); font-size: 46px; border-left: 10px solid var(--hl); padding: 16px 30px; margin-bottom: 40px; background: #fff; border-radius: 0 16px 16px 0; box-shadow: var(--shadow); }
+
+  .items { display: flex; flex-direction: column; gap: 20px; }
+  .item { --c: var(--accent); --soft-c: var(--soft); display: flex; align-items: center; gap: 24px; font-size: 42px; background: var(--card); border-radius: 18px; padding: 16px 30px 16px 22px; box-shadow: var(--shadow); border-left: 10px solid var(--soft-c); }
+  .item .ic { font-size: 42px; width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .item .ic img { width: 84px; height: 84px; }
+  .item b { font-weight: 900; margin-right: 6px; }
+  .item.cur { border-left-color: var(--c); box-shadow: 0 12px 30px rgba(28, 35, 64, 0.13); }
+  .items.compact { gap: 12px; }
+  .items.compact .item { font-size: 36px; padding: 8px 28px 8px 18px; }
+  .items.compact .item .ic, .items.compact .item .ic img { width: 66px; height: 66px; font-size: 34px; }
+  .tone-bad .item { --c: var(--bad); --soft-c: var(--bad-soft); }
+  .tone-good .item { --c: var(--good); --soft-c: var(--good-soft); }
+
+  .title-wrap { height: 100%; display: flex; align-items: center; gap: 40px; }
+  .title-wrap .txt { flex: 1; }
+  .title-wrap .big { font-family: var(--head); font-size: 100px; font-weight: 900; line-height: 1.15; white-space: pre-line; }
+  .title-wrap .line { width: 160px; height: 12px; background: var(--hl); border-radius: 6px; margin: 34px 0 30px; }
+  .title-wrap .sm { font-family: var(--hand); font-size: 54px; }
+  .chips { display: flex; gap: 14px; margin-top: 46px; flex-wrap: wrap; }
+  .chip { font-size: 28px; padding: 8px 24px; border-radius: 999px; background: #fff; border: 2px solid var(--line); color: var(--muted); }
+  .collage { position: relative; width: 620px; height: 620px; flex-shrink: 0; }
+  .collage .blob { position: absolute; inset: 60px; border-radius: 50%; background: var(--accent-bg); }
+  .collage img { position: absolute; }
+
+  .chapter { height: 100%; display: flex; align-items: center; gap: 60px; }
+  .chapter .txt { flex: 1; }
+  .chapter .no { font-family: var(--num); font-size: 210px; font-weight: 800; line-height: 1; color: var(--accent); }
+  .chapter .tt { font-family: var(--head); font-size: 104px; font-weight: 900; margin-top: 16px; line-height: 1.15; }
+  .chapter .ss { font-family: var(--hand); font-size: 50px; color: var(--muted); margin-top: 26px; }
+  .art { position: relative; width: 560px; height: 560px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .art::before { content: ''; position: absolute; inset: 30px; border-radius: 50%; background: var(--accent-bg); }
+  .art.warm::before { background: #fdecd9; }
+  .art img { position: relative; width: 420px; height: 420px; }
+
+  .bignum { height: 100%; display: flex; align-items: center; gap: 40px; }
+  .bignum .txt { flex: 1; }
+  .bignum .v { font-family: var(--num); font-size: 230px; font-weight: 800; color: var(--accent); line-height: 1; white-space: nowrap; }
+  .bignum .v .u { font-size: 80px; margin-left: 18px; }
+  .bignum .l { font-size: 52px; margin-top: 28px; line-height: 1.35; font-weight: 700; }
+  .bignum .m { font-family: var(--hand); font-size: 44px; color: var(--muted); margin-top: 18px; line-height: 1.35; }
+  .bignum .s { font-size: 26px; color: var(--muted); margin-top: 18px; }
+
+  /* hero：左文右圖 */
+  .hero { height: 100%; display: flex; align-items: center; gap: 40px; }
+  .hero .txt { flex: 1; }
+  .hero .pts { display: flex; flex-direction: column; gap: 18px; }
+  .hero .pt { font-size: 40px; line-height: 1.4; padding: 14px 24px; background: #fff; border-radius: 16px; box-shadow: var(--shadow); border-left: 8px solid var(--soft); }
+  .hero .pt.cur { border-left-color: var(--accent); }
+  .hero .pt b { font-weight: 900; }
+  .hero .cap { font-family: var(--hand); font-size: 30px; color: var(--muted); text-align: center; margin-top: -10px; position: relative; }
+
+  .flow { display: flex; align-items: stretch; margin-top: 30px; }
+  .node { flex: 1; text-align: center; padding: 26px 14px 30px; border-radius: 22px; background: var(--card); box-shadow: var(--shadow); }
+  .node img { width: 110px; height: 110px; margin: 0 auto 6px; }
+  .node .n { font-family: var(--num); font-size: 24px; font-weight: 600; color: var(--muted); }
+  .node .en { font-family: var(--head); font-size: 48px; font-weight: 900; margin: 6px 0; }
+  .node .zh { font-size: 32px; color: var(--accent); font-weight: 700; }
+  .node .d { font-size: 28px; color: var(--muted); margin-top: 12px; line-height: 1.35; }
+  .node.on { background: var(--accent); color: #fff; transform: translateY(-10px); box-shadow: 0 16px 36px rgba(47, 91, 234, 0.28); }
+  .node.on .n, .node.on .zh, .node.on .d { color: #fff; }
+  .node.off { opacity: 0.4; }
+  .arrow { width: 60px; display: flex; align-items: center; justify-content: center; font-size: 44px; color: #b9b4a8; }
+  .loop { font-family: var(--hand); margin-top: 36px; text-align: center; font-size: 40px; color: var(--hl); font-weight: 700; }
+
+  /* bars：柱狀圖 */
+  .bars { display: flex; align-items: flex-end; gap: 36px; height: 440px; padding: 0 20px; border-bottom: 4px solid var(--line); position: relative; }
+  .bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .bar .val { font-family: var(--num); font-size: 44px; font-weight: 800; color: var(--accent); margin-bottom: 10px; white-space: nowrap; }
+  .bar .col { width: 100%; max-width: 190px; border-radius: 16px 16px 0 0; background: linear-gradient(180deg, #5b80f2, var(--accent)); }
+  .bar.hl .val { color: var(--hl); }
+  .bar.hl .col { background: linear-gradient(180deg, #f59a4f, var(--hl)); }
+  .bar.dim .col { background: var(--soft); }
+  .bar-labels { display: flex; gap: 36px; padding: 14px 20px 0; }
+  .bar-labels div { flex: 1; text-align: center; font-family: var(--num); font-size: 30px; font-weight: 600; color: var(--muted); }
+  .chart-note { font-family: var(--hand); font-size: 32px; color: var(--muted); margin-top: 16px; }
+
+  /* timeline：時間線 */
+  .tl { position: relative; margin-top: 30px; }
+  .tl .axis { position: absolute; left: 0; right: 0; top: 118px; height: 6px; border-radius: 3px; background: var(--line); }
+  .tl .evs { display: flex; gap: 22px; position: relative; }
+  .ev { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .ev .d { font-family: var(--num); font-size: 36px; font-weight: 800; color: var(--accent); height: 60px; white-space: nowrap; }
+  .ev .ic { width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; }
+  .ev .ic img { width: 96px; height: 96px; }
+  .ev .dot { width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 6px solid var(--soft); margin: -58px 0 42px; position: relative; z-index: 1; visibility: hidden; }
+  .ev .evc { background: #fff; border-radius: 18px; box-shadow: var(--shadow); padding: 18px 18px 20px; width: 100%; border-top: 8px solid var(--soft); }
+  .ev .evc b { display: block; font-family: var(--head); font-weight: 900; font-size: 34px; margin-bottom: 6px; }
+  .ev .evc span { font-size: 26px; color: var(--muted); line-height: 1.4; }
+  .ev.cur .evc { border-top-color: var(--accent); box-shadow: 0 12px 30px rgba(28, 35, 64, 0.14); }
+  .ev.cur .d { color: var(--hl); }
+
+  .split { display: flex; gap: 44px; height: 100%; }
+  .win { flex: 1.65; background: #fff; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); border: 1px solid var(--line); }
+  .win .tab { background: #f3f1ec; padding: 14px 24px; font-family: var(--mono); font-size: 24px; color: var(--muted); display: flex; gap: 12px; align-items: center; }
+  .win.dark { background: #1f2336; border: none; }
+  .win.dark .tab { background: #2a2f47; color: #b7bdd8; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  .code { padding: 20px 30px; font-family: var(--mono); font-size: 26px; line-height: 1.5; white-space: pre; color: var(--text); }
+  .code.dense { font-size: 22px; line-height: 1.42; }
+  .code .h { color: var(--accent); font-weight: bold; }
+  .code .ac { color: var(--hl); font-weight: bold; }
+  .win.dark .code { color: #e6e9f7; }
+  .notes { flex: 1; display: flex; flex-direction: column; gap: 18px; justify-content: center; }
+  .note { font-size: 34px; padding: 20px 26px; border-radius: 16px; background: #fff; box-shadow: var(--shadow); line-height: 1.35; border-left: 8px solid var(--soft); }
+  .note.cur { border-left-color: var(--accent); }
+  .note.strong { border-left-color: var(--hl); background: #fff8f1; }
+  .stepbig { font-family: var(--hand); font-size: 32px; color: var(--accent); margin-bottom: 8px; font-weight: 700; }
+  .stephead { font-family: var(--head); font-size: 58px; font-weight: 900; margin-bottom: 12px; }
+  .you { color: #ffb86b; }
+  .agent { color: #e6e9f7; }
+  .done-l { color: #5ee3b0; }
+
+  .tree { font-family: var(--mono); font-size: 34px; line-height: 1.6; white-space: pre; padding: 30px 40px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .card { font-size: 40px; padding: 26px 32px; background: var(--card); border-radius: 20px; display: flex; gap: 20px; align-items: center; box-shadow: var(--shadow); }
+  .card .num { font-family: var(--num); font-size: 30px; width: 58px; height: 58px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 800; }
+  .closing { font-family: var(--hand); margin-top: 46px; font-size: 60px; text-align: center; font-weight: 700; }
+
+  .stats { display: grid; gap: 28px; margin-top: 10px; }
+  .stat { background: var(--card); border-radius: 24px; padding: 34px 38px 34px; box-shadow: var(--shadow); border-top: 8px solid var(--soft); position: relative; }
+  .stat img { width: 80px; height: 80px; margin-bottom: 8px; }
+  .stat.cur { border-top-color: var(--accent); }
+  .stat .v { font-family: var(--num); white-space: nowrap; font-size: 100px; font-weight: 800; color: var(--accent); line-height: 1.05; }
+  .stat.hl .v { color: var(--hl); }
+  .stat .u { font-size: 36px; margin-left: 8px; font-family: var(--sans); font-weight: 700; }
+  .stat .l { font-size: 38px; margin-top: 16px; line-height: 1.35; font-weight: 700; }
+  .stat .s { font-size: 24px; color: var(--muted); margin-top: 10px; }
+
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+  .cmp .col { background: var(--card); border-radius: 24px; box-shadow: var(--shadow); overflow: hidden; }
+  .cmp .hd { font-family: var(--head); font-size: 46px; font-weight: 900; padding: 20px 32px; background: #f3f1ec; display: flex; align-items: center; gap: 16px; }
+  .cmp .hd img { width: 70px; height: 70px; }
+  .cmp .col.main .hd { background: var(--accent); color: #fff; }
+  .cmp ul { list-style: none; padding: 16px 32px 24px; }
+  .cmp li { font-size: 38px; line-height: 1.4; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .cmp li:last-child { border-bottom: none; }
+
+  .hub { position: relative; height: 580px; margin-top: -10px; }
+  .hub svg { position: absolute; inset: 0; }
+  .hub .core { position: absolute; width: 300px; height: 300px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-family: var(--head); font-size: 44px; font-weight: 900; color: #fff; background: var(--accent); box-shadow: 0 18px 40px rgba(47, 91, 234, 0.28); padding: 30px; line-height: 1.3; white-space: pre-line; }
+  .hub .hn { position: absolute; width: 460px; background: var(--card); border-radius: 18px; box-shadow: var(--shadow); padding: 10px 20px 10px 12px; border-left: 10px solid var(--soft); display: flex; gap: 12px; align-items: center; }
+  .hub .hn .ic { font-size: 36px; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .hub .hn .ic img { width: 72px; height: 72px; }
+  .hub .hn b { display: block; font-family: var(--head); font-weight: 900; font-size: 32px; }
+  .hub .hn span { display: block; font-size: 25px; color: var(--muted); line-height: 1.3; margin-top: 2px; }
+  .hub .hn.on { border-left-color: var(--accent); transform: scale(1.04); box-shadow: 0 14px 34px rgba(28, 35, 64, 0.16); }
+  .note-tag { position: absolute; right: 0; top: -64px; font-family: var(--hand); font-size: 30px; color: var(--hl); background: #fff; border: 2px solid var(--hl-bg); padding: 6px 18px; border-radius: 999px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="top"><div id="brand"></div><div id="stages"></div></div>
+  <div id="content"></div>
+  <div id="sub"><span></span></div>
+  <div id="bar"></div>
+</div>
+<script src="scenes.js"></script>
+<script src="narration.cmn.js"></script>
+<script>
+  const STAGES = META.stages || [];
+  document.querySelector('#brand').innerHTML = META.brand || '';
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // ==關鍵字== → 高亮；**粗體** → 加粗；畫面文字一律經 md() 輸出
+  const md = (s) => esc(s).replace(/==(.+?)==/g, '<mark>$1</mark>').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  const plain = (s) => String(s).replace(/==(.+?)==/g, '$1').replace(/\*\*(.+?)\*\*/g, '$1');
+  const clamp = (x) => Math.max(0, Math.min(1, x));
+  const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
+  // Fluent 3D 插圖（fetch_assets.py 下載）；冇 img 就用 emoji
+  const slug = (n) => n.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const imgSrc = (n) => `assets/fluent/${slug(n)}.png`;
+  const fl = (n, size, extra = '') => `<img class="fl" src="${imgSrc(n)}" style="width:${size}px;height:${size}px;${extra}">`;
+  const icon = (it, size) => (it.img ? fl(it.img, size) : it.icon || '');
+
+  const vis = (at, k, t) => (at < k ? 1 : at === k ? ease(t) : 0);
+  const fx = (v) => `opacity:${v};transform:translateY(${(1 - v) * 24}px)`;
+  const pop = (v) => `opacity:${v};transform:scale(${0.86 + 0.14 * v})`;
+  const float = (v, dy = 0) => `opacity:${v};transform:translateY(${(1 - v) * 40 + dy}px) scale(${0.9 + 0.1 * v})`;
+
+  function lineVis(at, k, t, n, j) {
+    if (at < k) return 1;
+    if (at > k) return 0;
+    return clamp(t * n - j);
+  }
+  function hlLine(line) {
+    const e = esc(line);
+    if (/^#/.test(line)) return `<span class="h">${e}</span>`;
+    if (/^- AC\d/.test(line)) return `<span class="ac">${e}</span>`;
+    return e;
+  }
+
+  const head = (s, v0, extra = '') =>
+    `${s.kicker ? `<div class="kicker" style="${fx(v0)}">${md(s.kicker)}</div><br>` : ''}<h1 style="${fx(v0)}${extra}">${md(s.title)}</h1>`;
+  const sideHead = (s, v0) =>
+    `<div style="${fx(v0)}"><div class="stepbig">${s.stage ? `STEP ${s.stage}` : md(s.kicker || '')}</div><div class="stephead">${md(s.stage ? STAGES[s.stage - 1] || '' : s.heading || '')}</div></div>`;
+  const art = (name, v, warm, size = 420) => (name ? `<div class="art ${warm ? 'warm' : ''}" style="${float(v)}">${fl(name, size)}</div>` : '');
+  const dots = '<span class="dot" style="background:#ff6b6b"></span><span class="dot" style="background:#ffd166"></span><span class="dot" style="background:#5ee3b0"></span>&nbsp;';
+
+  const R = {
+    title(s, k, t) {
+      // imgs：[名稱, x, y, size]，喺右邊砌拼貼
+      const col = (s.imgs || [])
+        .map(([n, x, y, sz], i) => `<img class="fl" src="${imgSrc(n)}" style="left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;${float(vis(0, k, clamp(t * 1.4 - i * 0.12)))}">`)
+        .join('');
+      return `<div class="title-wrap"><div class="txt">
+        <div class="big" style="${fx(vis(0, k, t))}">${md(s.title)}</div>
+        <div class="line" style="opacity:${vis(0, k, clamp(t * 1.3 - 0.2))}"></div>
+        <div class="sm" style="${fx(vis(0, k, clamp(t * 1.4 - 0.3)))}">${md(s.subtitle)}</div>
+        <div class="chips" style="${fx(vis(s.chipsAt ?? 1, k, t))}">${s.chips.map((c) => `<span class="chip">${md(c)}</span>`).join('')}</div>
+      </div>${col ? `<div class="collage"><div class="blob"></div>${col}</div>` : ''}</div>`;
+    },
+    chapter(s, k, t) {
+      return `<div class="chapter"><div class="txt">
+        <div class="no" style="${pop(vis(0, k, t))}">${esc(s.no)}</div>
+        <div class="tt" style="${fx(vis(0, k, clamp(t * 1.3 - 0.2)))}">${md(s.title)}</div>
+        ${s.subtitle ? `<div class="ss" style="${fx(vis(0, k, clamp(t * 1.4 - 0.4)))}">${md(s.subtitle)}</div>` : ''}
+      </div>${art(s.img, vis(0, k, clamp(t * 1.2 - 0.1)), s.warm)}</div>`;
+    },
+    bignum(s, k, t) {
+      return `<div class="bignum"><div class="txt">
+        ${s.kicker ? `<div class="kicker" style="${fx(vis(0, k, t))}">${md(s.kicker)}</div>` : ''}
+        <div class="v" style="${pop(vis(0, k, t))}">${esc(s.value)}<span class="u">${esc(s.unit || '')}</span></div>
+        <div class="l" style="${fx(vis(0, k, clamp(t * 1.3 - 0.2)))}">${md(s.label)}</div>
+        ${s.more ? `<div class="m" style="${fx(vis(s.moreAt ?? 1, k, t))}">${md(s.more)}</div>` : ''}
+        ${s.source ? `<div class="s" style="opacity:${vis(0, k, t)}">${md(s.source)}</div>` : ''}
+      </div>${art(s.img, vis(0, k, clamp(t * 1.2 - 0.1)), s.warm, 380)}</div>`;
+    },
+    hero(s, k, t) {
+      const v0 = vis(0, k, t);
+      const pts = (s.points || [])
+        .map((p) => `<div class="pt ${p.at === k ? 'cur' : ''}" style="${fx(vis(p.at, k, t))}">${md(p.text)}</div>`)
+        .join('');
+      return `<div class="hero"><div class="txt">${head(s, v0)}<div class="pts">${pts}</div></div>
+        <div>${art(s.img, vis(s.imgAt ?? 0, k, clamp(t * 1.2 - 0.1)), s.warm, s.imgSize || 420)}${s.caption ? `<div class="cap" style="opacity:${vis(s.imgAt ?? 0, k, t)}">${md(s.caption)}</div>` : ''}</div></div>`;
+    },
+    bullets(s, k, t) {
+      const v0 = vis(0, k, t);
+      return `<div class="tone-${s.tone || 'none'}">${head(s, v0)}
+        ${s.quote ? `<div class="quote" style="${fx(vis(0, k, clamp(t * 1.3 - 0.2)))}">${md(s.quote)}</div>` : ''}
+        <div class="items ${s.items.length > 4 ? 'compact' : ''}">${s.items
+          .map((it) => `<div class="item ${it.at === k ? 'cur' : ''}" style="${fx(vis(it.at, k, t))}"><span class="ic">${icon(it, s.items.length > 4 ? 66 : 84)}</span><span>${md(it.text)}</span></div>`)
+          .join('')}</div>
+      </div>`;
+    },
+    flow(s, k, t) {
+      const v0 = vis(0, k, t);
+      const anyOn = s.items.some((it) => it.hl === k);
+      const nodes = s.items
+        .map((it, i) => {
+          const cls = it.hl === k ? 'on' : anyOn && it.hl > k ? 'off' : '';
+          const node = `<div class="node ${cls}" style="opacity:${v0}">${it.img ? fl(it.img, 110, 'margin:0 auto 6px') : ''}<div class="n">STEP ${i + 1}</div><div class="en">${md(it.en)}</div><div class="zh">${md(it.zh)}</div><div class="d">${md(it.desc)}</div></div>`;
+          return i ? `<div class="arrow" style="opacity:${v0}">→</div>${node}` : node;
+        })
+        .join('');
+      const last = s.steps.length - 1;
+      return `${head(s, v0)}<div class="flow">${nodes}</div>
+        <div class="loop" style="${fx(vis(s.loopAt ?? last, k, t))}">${md(s.loopText || '')}</div>`;
+    },
+    bars(s, k, t) {
+      const v0 = vis(0, k, t);
+      const max = s.max || Math.max(...s.bars.map((b) => b.value));
+      const bars = s.bars
+        .map((b) => {
+          const v = vis(b.at ?? 0, k, t);
+          return `<div class="bar ${b.hl ? 'hl' : ''}"><div class="val" style="opacity:${v}">${esc(b.display ?? b.value)}</div><div class="col" style="height:${(b.value / max) * 330 * v}px"></div></div>`;
+        })
+        .join('');
+      return `${head(s, v0, ';margin-bottom:20px')}<div class="bars">${bars}</div>
+        <div class="bar-labels">${s.bars.map((b) => `<div>${esc(b.label)}</div>`).join('')}</div>
+        ${s.note ? `<div class="chart-note" style="opacity:${vis(s.noteAt ?? 0, k, t)}">${md(s.note)}</div>` : ''}`;
+    },
+    timeline(s, k, t) {
+      const v0 = vis(0, k, t);
+      const evs = s.events
+        .map((e) => `<div class="ev ${e.at === k ? 'cur' : ''}" style="${fx(vis(e.at, k, t))}"><div class="d">${esc(e.date)}</div><div class="ic">${icon(e, 96)}</div><div class="evc"><b>${md(e.title)}</b><span>${md(e.text)}</span></div></div>`)
+        .join('');
+      return `${head(s, v0, ';margin-bottom:10px')}<div class="tl"><div class="evs">${evs}</div></div>
+        ${s.note ? `<div class="chart-note" style="opacity:${vis(s.noteAt ?? 0, k, t)};text-align:right">${md(s.note)}</div>` : ''}`;
+    },
+    stats(s, k, t) {
+      const v0 = vis(0, k, t);
+      const cols = s.cols || s.items.length;
+      const cards = s.items
+        .map((it) => `<div class="stat ${it.at === k ? 'cur' : ''} ${it.hl ? 'hl' : ''}" style="${fx(vis(it.at, k, t))}">${it.img ? fl(it.img, 80) : ''}<div class="v">${esc(it.value)}<span class="u">${esc(it.unit || '')}</span></div><div class="l">${md(it.label)}</div>${it.source ? `<div class="s">${md(it.source)}</div>` : ''}</div>`)
+        .join('');
+      return `${head(s, v0)}<div class="stats" style="grid-template-columns:repeat(${cols},1fr)">${cards}</div>`;
+    },
+    compare(s, k, t) {
+      const v0 = vis(0, k, t);
+      const col = (c, main) =>
+        `<div class="col ${main ? 'main' : ''}" style="${fx(vis(c.at ?? 0, k, t))}"><div class="hd">${c.img ? fl(c.img, 70) : ''}${md(c.title)}</div><ul>${c.items
+          .map((it) => `<li style="opacity:${vis(it.at, k, t)}">${md(it.text)}</li>`)
+          .join('')}</ul></div>`;
+      return `${head(s, v0)}<div class="cmp">${s.left ? col(s.left, false) : ''}${s.right ? col(s.right, true) : ''}</div>`;
+    },
+    hub(s, k, t) {
+      const v0 = vis(0, k, t);
+      const W = 1660, H = 580, cx = W / 2, cy = H / 2, rx = 600, ry = 200;
+      const n = s.nodes.length;
+      const pos = s.nodes.map((_, i) => {
+        const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
+        return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)];
+      });
+      const lines = s.nodes
+        .map((nd, i) => `<line x1="${cx}" y1="${cy}" x2="${pos[i][0]}" y2="${pos[i][1]}" stroke="${nd.at === k ? '#2f5bea' : '#d6d1c5'}" stroke-width="4" stroke-dasharray="10 8" opacity="${vis(nd.at, k, t)}"/>`)
+        .join('');
+      const cards = s.nodes
+        .map((nd, i) => `<div class="hn ${nd.at === k ? 'on' : ''}" style="left:${pos[i][0] - 230}px;top:${pos[i][1] - 46}px;opacity:${vis(nd.at, k, t)}"><span class="ic">${icon(nd, 72)}</span><div><b>${md(nd.title)}</b><span>${md(nd.text)}</span></div></div>`)
+        .join('');
+      return `${head(s, v0, ';margin-bottom:16px')}<div class="hub" style="opacity:${v0}">
+        ${s.tag ? `<div class="note-tag">${md(s.tag)}</div>` : ''}
+        <svg width="${W}" height="${H}">${lines}</svg>
+        <div class="core" style="left:${cx - 150}px;top:${cy - 150}px">${esc(s.center)}</div>${cards}</div>`;
+    },
+    file(s, k, t) {
+      const code = s.chunks
+        .map((c) => c.lines.map((ln, j) => `<div style="opacity:${lineVis(c.at, k, t, c.lines.length, j)}">${hlLine(ln) || '&nbsp;'}</div>`).join(''))
+        .join('');
+      const nLines = s.chunks.reduce((a, c) => a + c.lines.length, 0);
+      const notes = s.notes
+        .map((n) => `<div class="note ${n.at === k ? 'cur' : ''} ${n.strong ? 'strong' : ''}" style="${fx(vis(n.at, k, t))}">${md(n.text)}</div>`)
+        .join('');
+      const v0 = vis(0, k, t);
+      return `<div class="split">
+        <div class="win" style="opacity:${v0}"><div class="tab">${dots}${esc(s.file)}</div>
+          <div class="code ${nLines > 16 ? 'dense' : ''}">${code}</div></div>
+        <div class="notes">${sideHead(s, v0)}${notes}</div>
+      </div>`;
+    },
+    terminal(s, k, t) {
+      const body = s.chunks
+        .map((c) => {
+          const cls = c.kind === 'you' ? 'you' : c.kind === 'done' ? 'done-l' : 'agent';
+          const prefix = c.kind === 'you' ? '&gt; ' : '  ';
+          return (
+            `<div style="height:${c.at ? 14 : 0}px"></div>` +
+            c.lines.map((ln, j) => `<div class="${cls}" style="opacity:${lineVis(c.at, k, t, c.lines.length, j)}">${j === 0 || c.kind === 'you' ? prefix : '  '}${esc(ln)}</div>`).join('')
+          );
+        })
+        .join('');
+      const v0 = vis(0, k, t);
+      const notes = (s.tips || []).map((n) => `<div class="note ${n.strong ? 'strong' : ''}" style="${fx(vis(n.at, k, clamp(t * 1.2 - 0.1)))}">${md(n.text)}</div>`).join('');
+      return `<div class="split">
+        <div class="win dark" style="opacity:${v0}"><div class="tab">${dots}${esc(s.windowTitle || 'Terminal')}</div>
+          <div class="code" style="font-size:26px;white-space:pre-wrap">${body}</div></div>
+        <div class="notes">${sideHead(s, v0)}${notes}</div>
+      </div>`;
+    },
+    repo(s, k, t) {
+      const v0 = vis(0, k, t);
+      const rules = s.rules
+        .map((r) => `<div class="${r.strong ? 'ac' : /^#/.test(r.text) ? 'h' : ''}" style="opacity:${vis(r.at, k, t)}">${esc(r.text)}</div>`)
+        .join('');
+      return `${head(s, v0, ';margin-bottom:30px')}
+        <div class="split" style="height:auto">
+          <div class="win" style="flex:1;${fx(v0)}"><div class="tab">${esc(s.treeTitle || '📁 repo')}</div><div class="tree" style="${s.tree.length > 9 ? 'font-size:26px;line-height:1.5;padding:22px 36px' : ''}">${s.tree.map(esc).join('\n')}</div></div>
+          <div class="win" style="flex:1.4;${fx(vis(1, k, t))}"><div class="tab">${esc(s.rulesTitle || 'CLAUDE.md')}</div><div class="code" style="font-size:30px;line-height:1.75;white-space:pre-wrap">${rules}</div></div>
+        </div>`;
+    },
+    outro(s, k, t) {
+      const v0 = vis(0, k, t);
+      const cards = s.items
+        .map((it, i) => `<div class="card" style="${fx(vis(it.at, k, clamp(t * 1.3 - (i % 2) * 0.3)))}"><span class="num">${i + 1}</span><span>${md(it.text)}</span></div>`)
+        .join('');
+      return `<h1 style="${fx(v0)}">${md(s.title)}</h1><div class="grid">${cards}</div>
+        <div class="closing" style="${fx(vis(s.closing.at, k, t))}">${md(s.closing.text)}</div>`;
+    },
+  };
+
+  window.transitionFor = (si, k) => {
+    const s = SCENES[si];
+    if ((s.layout === 'file' || s.layout === 'terminal') && s.chunks.some((c) => c.at === k)) {
+      const n = s.chunks.filter((c) => c.at === k).reduce((a, c) => a + c.lines.length, 0);
+      return Math.min(2.0, 0.5 + n * 0.12);
+    }
+    if (s.layout === 'bars') return 1.0;
+    return ['chapter', 'bignum', 'title', 'hero'].includes(s.layout) && k === 0 ? 0.9 : 0.6;
+  };
+
+  // step 可以係字串，或者 { say, sub }：say = 配音讀嘅口語，sub = 畫面字幕嘅書面語（可用 ==關鍵字==）
+  const stepOf = (si, k, lang) => (lang === 'cmn' ? CMN[si][k] : SCENES[si].steps[k]);
+  const subRaw = (si, k, lang) => { const x = stepOf(si, k, lang); return typeof x === 'string' ? x : x.sub ?? x.say; };
+  window.stepText = (si, k, lang) => plain(subRaw(si, k, lang));
+  window.speechText = (si, k, lang) => { const x = stepOf(si, k, lang); return plain(typeof x === 'string' ? x : x.say ?? x.sub); };
+
+  window.renderFrame = (si, k, t, progress, lang = 'yue') => {
+    const s = SCENES[si];
+    $('#content').innerHTML = R[s.layout](s, k, t);
+    $('#stages').innerHTML = s.stage
+      ? STAGES.map((n, i) => `<span class="pill ${i + 1 === s.stage ? 'on' : i + 1 < s.stage ? 'done' : ''}">${i + 1}. ${n}</span>`).join('')
+      : '';
+    $('#sub span').innerHTML = md(subRaw(si, k, lang));
+    $('#sub').style.opacity = k === 0 ? ease(t * 2) : 1;
+    $('#bar').style.width = `${progress * 100}%`;
+    // 等晒圖片 decode 先回傳，截圖先唔會閃
+    return Promise.all([...document.images].map((im) => (im.complete ? im.decode().catch(() => {}) : new Promise((r) => { im.onload = im.onerror = r; }))));
+  };
+
+  if (!navigator.webdriver) {
+    let si = 0, k = 0;
+    const lang = new URLSearchParams(location.search).get('lang') || 'yue';
+    const show = () => renderFrame(si, k, 1, (si + 1) / SCENES.length, lang);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { if (k < SCENES[si].steps.length - 1) k++; else if (si < SCENES.length - 1) { si++; k = 0; } }
+      if (e.key === 'ArrowLeft') { if (k > 0) k--; else if (si > 0) { si--; k = SCENES[si].steps.length - 1; } }
+      show();
+    });
+    show();
+  }
+</script>
+</body>
+</html>
