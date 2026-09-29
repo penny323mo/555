@@ -1,6 +1,6 @@
 // 影片唯一內容來源：畫面 + 廣東話旁白（每個 step = 一句旁白 = 一句字幕）。
 // step 可以係字串，或者 { say, sub }：say = 配音讀嘅廣東話口語，sub = 畫面字幕嘅書面語（預設要咁寫）。
-// 畫面上嘅文字（標題、item、卡片）一律用書面語。
+// 畫面上嘅文字（標題、item、卡片）一律用書面語；==關鍵字== 會用高亮色（字幕同畫面都得）。
 // item 嘅 `at` = 喺第幾個 step（0 起）出現；flow 嘅 `hl` = 喺第幾個 step 高亮。
 window.META = {
   slug: 'my-tutorial', // 輸出檔名：my-tutorial.yue.mp4
@@ -19,6 +19,24 @@ window.SCENES = [
       { say: '歡迎收睇，呢個係示範影片。', sub: '歡迎收看，這是示範影片。' },
       { say: '下面逐一示範每種版面。', sub: '以下逐一示範各種版面。' },
     ],
+  },
+  {
+    layout: 'chapter',
+    no: '01',
+    title: '章節卡',
+    subtitle: '分段原則：每個大部分之前加一張',
+    steps: ['第一部分。'],
+  },
+  {
+    layout: 'bignum',
+    kicker: '大數字開場',
+    value: '945',
+    unit: 'TWh',
+    label: '一個關鍵數字，配一句==重點說明==',
+    more: '可選：第二句補充，喺第二句旁白出現',
+    moreAt: 1,
+    source: '資料來源',
+    steps: ['大數字版面，適合開場震撼。', '補充說明。'],
   },
   {
     layout: 'bullets',
@@ -93,9 +111,9 @@ window.SCENES = [
     title: '數字卡版面',
     items: [
       { at: 1, value: '415', unit: 'TWh', label: '大數字 + 單位', source: '資料來源' },
-      { at: 2, value: '瓶頸', label: '數字以外亦可放短詞', color: 3 },
+      { at: 2, value: '瓶頸', label: '數字以外亦可放短詞', hl: true }, // hl = 用高亮色
     ],
-    steps: ['數字卡版面。', '每張卡逐一出現。', '可以指定顏色。'],
+    steps: ['數字卡版面。', '每張卡逐一出現。', '重點卡可以用高亮色。'],
   },
   {
     layout: 'compare',
