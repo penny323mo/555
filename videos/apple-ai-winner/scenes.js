@@ -22,7 +22,7 @@ window.SCENES = [
     ],
     steps: [
       { say: '今集講一個好反直覺嘅講法：Apple 唔需要贏 AI 競賽，佢只需要做 AI 嘅收費站。', sub: '本集探討一個反直覺的論點：Apple 不需要贏 AI 競賽，它只需做 AI 的==收費站==。' },
-      { say: '我哋會用大約十分鐘，拆解點解佢可能係 AI 年代最大嘅贏家，亦會認真睇埋反方。', sub: '我們將用約十分鐘，拆解它為何可能是 AI 年代最大贏家，亦會認真檢視反方。' },
+      { say: '我哋會用十幾分鐘，拆解點解佢可能係 AI 年代最大嘅贏家，亦會認真睇埋反方。', sub: '我們將用十多分鐘，拆解它為何可能是 AI 年代最大贏家，亦會認真檢視反方。' },
     ],
   },
 
@@ -322,7 +322,7 @@ window.SCENES = [
     img: 'Gear',
     points: [
       { at: 0, text: 'Neural Engine 自 ==2017 年==起內置於 iPhone' },
-      { at: 1, text: 'Mac 統一記憶體：本地可運行大型模型' },
+      { at: 1, text: 'Mac 統一記憶體：本地可運行大型模型（下一章詳述）' },
       { at: 2, text: '連 AI 伺服器都用自家晶片（Houston 工廠已出貨）' },
     ],
     steps: [
@@ -366,14 +366,123 @@ window.SCENES = [
     ],
   },
 
-  // ───────── 05 深厚的機器學習 ─────────
+  // ───────── 05 Apple 晶片：意外的 AI 基建 ─────────
   {
     layout: 'chapter',
     no: '05',
+    title: 'Mac 成了 AI 基建',
+    subtitle: '連 OpenAI 都在大量購入',
+    img: 'Desktop computer',
+    steps: [{ say: '第五點，亦係最近最出人意表嘅發展：Apple 晶片，無意之中變成咗 AI 基建。', sub: '第五點，也是近期最出人意表的發展：Apple 晶片==意外成為 AI 基建==。' }],
+  },
+
+  {
+    layout: 'hero',
+    kicker: '據報',
+    title: 'OpenAI 買了數以萬計的 Mac',
+    img: 'Shopping cart',
+    points: [
+      { at: 0, text: 'OpenAI 據報購入==數以萬計== Mac mini 與 Mac Studio' },
+      { at: 1, text: '用途：強化學習，訓練「電腦操作代理」' },
+      { at: 1, text: 'Anthropic 則經 AWS 租用 Mac' },
+    ],
+    steps: [
+      { say: '今年 8 月，The Information 報道，OpenAI 過去幾個月買咗幾萬部 Mac mini 同 Mac Studio。', sub: '今年 8 月，The Information 報道 OpenAI 近月購入==數以萬計==的 Mac mini 與 Mac Studio。' },
+      { say: '用嚟做強化學習，訓練識得自己操作電腦嘅 AI 代理；據報 Anthropic 都係咁做，不過係經 AWS 租用 Mac。', sub: '用途是強化學習，訓練能自行操作電腦的 ==AI 代理==；據報 Anthropic 亦經 AWS 租用 Mac。' },
+    ],
+  },
+
+  {
+    layout: 'hero',
+    kicker: '反轉',
+    title: 'Apple 也在賣鏟',
+    img: 'Pick',
+    warm: true,
+    points: [
+      { at: 0, text: '最想繞過 App 的 AI 代理，正在 ==Mac 上受訓==' },
+      { at: 1, text: '據報 NVIDIA 視 Apple 為本地 AI 的主要對手' },
+      { at: 2, text: '收路費之外，Apple 也開始==賣鏟==' },
+    ],
+    steps: [
+      { say: '稍後會講，AI 代理繞過 App 係 Apple 最大嘅威脅；諷刺嘅係，呢啲代理正正喺 Mac 上面訓練。', sub: '稍後會談到，AI 代理是 Apple 最大威脅；諷刺的是，這些代理正正在 ==Mac 上受訓==。' },
+      { say: '同一份報道仲話，NVIDIA 已經將 Apple 視為本地 AI 嘅主要對手。', sub: '同一報道指，NVIDIA 已視 Apple 為==本地 AI== 的主要對手。' },
+      { say: '記唔記得開頭講嘅三種人？Apple 本來係收路費嗰個，而家連鏟都開始賣埋。', sub: '還記得開首的三種人嗎？Apple 本是收路費者，如今連==鏟==也開始賣。' },
+    ],
+  },
+
+  {
+    layout: 'stats',
+    kicker: '為何是 Mac',
+    title: '統一記憶體的威力',
+    items: [
+      { at: 0, img: 'Desktop computer', value: '512GB', label: 'M5 Ultra Mac Studio 最高統一記憶體', source: 'Apple，2026 年 8 月', hl: true },
+      { at: 0, img: 'High voltage', value: '1.2TB/s', label: '記憶體頻寬（較 M3 Ultra 高 50%）', source: 'Apple' },
+      { at: 1, img: 'Gear', value: '80GB', label: '一張 NVIDIA H100 的顯示記憶體', source: 'NVIDIA' },
+    ],
+    steps: [
+      { say: '點解係 Mac？關鍵係統一記憶體。今年 8 月推出嘅 M5 Ultra Mac Studio，最多有 512GB，頻寬每秒 1.2 TB。', sub: '為何是 Mac？關鍵在統一記憶體：8 月推出的 M5 Ultra Mac Studio 最高 ==512GB==，頻寬每秒 1.2TB。' },
+      { say: '對比一下，一張 NVIDIA H100 得 80GB 顯示記憶體。大模型要塞得落記憶體先行得郁，呢方面 Mac 有先天優勢。', sub: '對比之下，一張 NVIDIA H100 只有 80GB 顯示記憶體；大模型須放得進記憶體才能運行，Mac 在此==先天佔優==。' },
+    ],
+  },
+
+  {
+    layout: 'flow',
+    kicker: 'macOS 26.2',
+    title: '把數部 Mac 串成一部 AI 電腦',
+    items: [
+      { hl: 0, img: 'Desktop computer', en: '串連', zh: 'Thunderbolt 5', desc: '多部 Mac Studio' },
+      { hl: 1, img: 'High voltage', en: '共享', zh: 'RDMA', desc: '延遲降至 50 微秒以下' },
+      { hl: 2, img: 'Brain', en: '運行', zh: '萬億參數', desc: 'Kimi K2 Thinking' },
+    ],
+    loopText: '一次系統更新，就把 Mac 變成 ==AI 叢集==',
+    steps: [
+      { say: '仲有，去年 12 月 macOS 26.2 加咗一個功能：用 Thunderbolt 5 將幾部 Mac 串埋一齊。', sub: '此外，去年 12 月 macOS 26.2 新增功能：以 Thunderbolt 5 ==串連多部 Mac==。' },
+      { say: '透過 RDMA 技術，幾部機好似共用一大片記憶體咁，延遲由 300 微秒降到 50 微秒以下。', sub: '透過 RDMA，多部機器如同共用一大片記憶體，延遲由 300 微秒降至 ==50 微秒以下==。' },
+      { say: '結果，四部 Mac Studio 串埋，已經行到一萬億參數嘅 Kimi K2 Thinking 模型。', sub: '結果，四部 Mac Studio 串連即可運行==萬億參數==的 Kimi K2 Thinking 模型。' },
+    ],
+  },
+
+  {
+    layout: 'hero',
+    kicker: '供不應求',
+    title: 'Mac mini、Mac Studio 缺貨',
+    img: 'Package',
+    points: [
+      { at: 0, text: 'Tim Cook：客戶認識 Mac 的速度==快過預期==' },
+      { at: 1, text: '2026 財年第二季 Mac 收入 84 億美元，按年升 6%' },
+      { at: 1, text: '64GB Mac mini 一度需等候 16–18 週' },
+    ],
+    steps: [
+      { say: '需求嚟得快到連 Apple 都估唔到。Tim Cook 喺 4 月底業績會話，客戶發現 Mac 適合跑 AI 同代理工具，速度快過佢哋預期。', sub: 'Tim Cook 於 4 月底業績會表示：客戶認識到 Mac 適合 AI 與代理工具，速度==快過預期==。' },
+      { say: '嗰季 Mac 收入 84 億美元，按年升 6%；64GB 嘅 Mac mini 一度要等成 16 到 18 個禮拜。', sub: '該季 Mac 收入 84 億美元，按年升 6%；64GB Mac mini 一度需等 ==16 至 18 週==。' },
+    ],
+  },
+
+  {
+    layout: 'hero',
+    kicker: '要分清楚',
+    title: 'Mac 不會取代 NVIDIA',
+    img: 'Magnifying glass tilted left',
+    warm: true,
+    points: [
+      { at: 0, text: '預訓練大型基礎模型：仍是 ==NVIDIA 的天下==' },
+      { at: 1, text: 'Mac 強項：推理、微調、AI 代理訓練場' },
+      { at: 1, text: 'AI 愈走向本地與代理，這塊市場愈大' },
+    ],
+    steps: [
+      { say: '不過要分清楚：訓練最大型嘅基礎模型，仍然係 NVIDIA 嘅天下，Mac 唔係要取代佢。', sub: '但須分清：預訓練大型基礎模型仍是 ==NVIDIA 的天下==，Mac 並非取代者。' },
+      { say: 'Mac 嘅強項係推理、微調，同埋做 AI 代理嘅訓練場；AI 愈走向本地同代理，呢塊市場就愈大。', sub: 'Mac 強在推理、微調及充當 ==AI 代理訓練場==；AI 愈走向本地與代理，市場愈大。' },
+    ],
+  },
+
+  // ───────── 06 深厚的機器學習 ─────────
+  {
+    layout: 'chapter',
+    no: '06',
     title: '你用了它的 AI 很多年',
     subtitle: '只是它從不叫它做 AI',
     img: 'Brain',
-    steps: [{ say: '第五點：Apple 唔講 AI，只講功能。你用咗佢嘅 AI 好多年，只係佢從來冇叫佢做 AI。', sub: '第五點：Apple 不講 AI，只講功能。你用了它的 AI ==很多年==，只是它從不這樣稱呼。' }],
+    steps: [{ say: '第六點：Apple 唔講 AI，只講功能。你用咗佢嘅 AI 好多年，只係佢從來冇叫佢做 AI。', sub: '第六點：Apple 不講 AI，只講功能。你用了它的 AI ==很多年==，只是它從不這樣稱呼。' }],
   },
 
   {
@@ -411,14 +520,14 @@ window.SCENES = [
     ],
   },
 
-  // ───────── 06 下一個入口 ─────────
+  // ───────── 07 下一個入口 ─────────
   {
     layout: 'chapter',
-    no: '06',
+    no: '07',
     title: '借力打力',
     subtitle: '搶下一個入口：Siri、新 CEO、新硬件',
     img: 'Handshake',
-    steps: [{ say: '第六點：Apple 唔堅持自己造最強嘅模型，而係借力打力，同時搶下一個入口。', sub: '第六點：Apple 不堅持自造最強模型，而是==借力打力==，同時搶佔下一個入口。' }],
+    steps: [{ say: '第七點：Apple 唔堅持自己造最強嘅模型，而係借力打力，同時搶下一個入口。', sub: '第七點：Apple 不堅持自造最強模型，而是==借力打力==，同時搶佔下一個入口。' }],
   },
 
   {
@@ -493,7 +602,7 @@ window.SCENES = [
   // ───────── 反方 ─────────
   {
     layout: 'chapter',
-    no: '07',
+    no: '08',
     title: '反方觀點',
     subtitle: '這個論點可能錯在哪裡？',
     img: 'Thinking face',
