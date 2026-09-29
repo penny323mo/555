@@ -115,6 +115,7 @@
   <div id="bar"></div>
 </div>
 <script src="scenes.js"></script>
+<script src="narration.cmn.js"></script>
 <script>
   const STAGES = ['Specify', 'Plan', 'Tasks', 'Implement', 'Verify'];
   const $ = (s) => document.querySelector(s);
@@ -245,13 +246,16 @@
     return 0.6;
   };
 
-  window.renderFrame = (si, k, t, progress) => {
+  // 字幕文字：yue = scenes.js 嘅 steps；cmn = narration.cmn.js
+  window.stepText = (si, k, lang) => (lang === 'cmn' ? CMN[si][k] : SCENES[si].steps[k]);
+
+  window.renderFrame = (si, k, t, progress, lang = 'yue') => {
     const s = SCENES[si];
     $('#content').innerHTML = R[s.layout](s, k, t);
     $('#stages').innerHTML = s.stage
       ? STAGES.map((n, i) => `<span class="pill ${i + 1 === s.stage ? 'on' : i + 1 < s.stage ? 'done' : ''}">${i + 1}. ${n}</span>`).join('')
       : '';
-    $('#sub span').textContent = s.steps[k];
+    $('#sub span').textContent = stepText(si, k, lang);
     $('#sub').style.opacity = k === 0 ? ease(t * 2) : 1;
     $('#bar').style.width = `${progress * 100}%`;
   };
@@ -259,7 +263,8 @@
   // 喺瀏覽器直接打開時，用 ← → 手動翻頁預覽
   if (!navigator.webdriver) {
     let si = 0, k = 0;
-    const show = () => renderFrame(si, k, 1, (si + 1) / SCENES.length);
+    const lang = new URLSearchParams(location.search).get('lang') || 'yue';   // slides.html?lang=cmn
+    const show = () => renderFrame(si, k, 1, (si + 1) / SCENES.length, lang);
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') { if (k < SCENES[si].steps.length - 1) k++; else if (si < SCENES.length - 1) { si++; k = 0; } }
       if (e.key === 'ArrowLeft') { if (k > 0) k--; else if (si > 0) { si--; k = SCENES[si].steps.length - 1; } }

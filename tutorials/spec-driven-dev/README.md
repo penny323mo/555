@@ -1,15 +1,19 @@
 # 教學影片：Spec-Driven Development × Coding Agent
 
-約 8½ 分鐘、1080p、廣東話繁中字幕嘅教學片，用本 repo（天氣地圖）加「°C / °F 切換」做實戰例子。
+1080p 教學片，有**廣東話**同**普通話**兩個配音版本，用本 repo（天氣地圖）加「°C / °F 切換」做實戰例子。
 
 | 檔案 | 用途 |
 |---|---|
-| `spec-driven-dev.mp4` | 成品影片（字幕已燒入畫面，冇旁白聲） |
-| `narration.srt` | 旁白字幕（同影片時間軸一致，可用嚟配音或上傳 YouTube） |
-| `script.md` | 按章節整理嘅旁白稿（附時間碼） |
-| `scenes.js` | **唯一內容來源**：畫面同旁白都喺呢度改 |
-| `slides.html` | 渲染模板；直接用瀏覽器開，用 ← → 可以手動翻頁預覽 |
-| `render.py` | 逐格截圖 → ffmpeg 合成 MP4，同時輸出 SRT 同旁白稿 |
+| `spec-driven-dev.yue.mp4` | 廣東話旁白 + 廣東話字幕 |
+| `spec-driven-dev.cmn.mp4` | 普通話旁白 + 普通話字幕（畫面文字仍係廣東話書寫） |
+| `narration.{yue,cmn}.srt` | 字幕檔（同影片時間軸一致，可上傳 YouTube） |
+| `script.{yue,cmn}.md` | 按章節整理嘅旁白稿（附時間碼） |
+| `scenes.js` | 畫面內容 + 廣東話旁白（唯一內容來源） |
+| `narration.cmn.js` | 普通話旁白（句數同 `scenes.js` 一一對應） |
+| `slides.html` | 渲染模板；直接用瀏覽器開，← → 翻頁，`?lang=cmn` 睇普通話字幕 |
+| `tts.py` | 逐句合成語音（Google 翻譯 TTS / 離線 MeloTTS），快取喺 `.tts-cache/` |
+| `render.py` | 逐格截圖 + 配音 → ffmpeg 合成 MP4，時間軸跟配音長度走 |
+| `verify_tts.py` | 用 SenseVoice 語音辨識逐句核對配音，揪出讀錯嘅句子 |
 
 ## 內容大綱
 
@@ -27,18 +31,45 @@
 ```bash
 pip install playwright imageio-ffmpeg
 python -m playwright install chromium   # 已有 Chromium 可改用 CHROMIUM_PATH=/path/to/chrome
-python render.py --preview   # 每個 step 截一張圖去 preview/，檢查排版
-python render.py             # 輸出 mp4 + srt + script.md（約 4 分鐘）
+
+python render.py --preview        # 每個 step 截一張圖去 preview/，檢查排版
+python render.py --lang yue       # 廣東話版
+python render.py --lang cmn       # 普通話版
+python render.py --lang yue --silent   # 唔配音，按字數估時間
 ```
 
-每句字幕嘅停留時間 = `max(2.8, 字數 × 0.15 + 0.9)` 秒（見 `render.py` 嘅 `hold_seconds`）。
+改咗旁白之後，只有改過嘅句子會重新合成（其餘用 `.tts-cache/`）。
 
-## 加旁白聲
+### 核對配音
 
-生成環境連唔到 TTS 服務，所以影片冇聲。想加廣東話旁白，可以：
+```bash
+pip install sherpa-onnx soundfile opencc-python-reimplemented
+# 下載 SenseVoice 並解壓：
+# https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2
+SENSEVOICE_DIR=... python verify_tts.py --lang yue
+```
 
-- 用 `narration.srt` 對住影片自己錄音；或
-- 用 `edge-tts`（voice `zh-HK-HiuMaanNeural`）逐句合成，再用 ffmpeg 混入：
-  `ffmpeg -i spec-driven-dev.mp4 -i voice.m4a -map 0:v -map 1:a -c:v copy -shortest out.mp4`
+目前結果（相似度 = 辨識文字同原文嘅字元相似度）：
 
-如果真人語速比字幕慢，將 `hold_seconds` 嘅系數調高再重新渲染就得。
+| 版本 | 平均相似度 | < 0.85 句數 | 備註 |
+|---|---|---|---|
+| 廣東話（Google `yue`） | 0.959 | 1 / 67 | 低分句係 Given/When/Then，屬辨識誤差 |
+| 普通話（Google `zh-TW`） | 0.948 | 4 / 67 | 低分句係產品名、同音字（程式↔城市） |
+| 普通話（離線 MeloTTS） | 0.816 | 38 / 67 | 只作後備 |
+| 廣東話（離線 sherpa-onnx VITS） | — | — | 英文詞直接略過、發音差，唔建議 |
+
+普通話聲線讀獨立英文詞（spec、task、prompt）好差，所以普通話稿改用「規格 / 任務 / 提示詞」。
+
+## 配音工具總覽
+
+| 工具 | 廣東話 | 普通話 | 成本 | 適合 |
+|---|---|---|---|---|
+| **Google 翻譯 TTS**（本專案預設） | ✅ | ✅ | 免費、免 key | 個人 / 內部用；非官方端點，無 SLA |
+| **Azure AI Speech**（`zh-HK-HiuMaanNeural` 等） | ✅ 自然 | ✅ | 有免費額度 | 公開發佈首選；`edge-tts` 係同一批聲線嘅免費版 |
+| **Google Cloud Text-to-Speech**（`yue-HK`） | ✅ | ✅ | 有免費額度 | 公開發佈；要 API key |
+| **CosyVoice**（阿里開源，Apache-2.0） | ✅ 方言 + 聲音複製 | ✅ | 免費，要 GPU 較理想 | 想用自己把聲；中英夾雜好 |
+| **ElevenLabs** | ⚠️ 官方 TTS 語言表未列廣東話 | ✅ | 收費 | 普通話 / 英文 |
+| **sherpa-onnx**（離線） | ⚠️ 質素一般 | ✅ MeloTTS | 免費 | 完全離線環境 |
+| 真人錄音 | ✅ | ✅ | — | 最佳質素：對住 `narration.*.srt` 錄 |
+
+換引擎只需要喺 `tts.py` 加一個函數，輸出 WAV 就得，`render.py` 會自動跟新音檔長度排時間軸。

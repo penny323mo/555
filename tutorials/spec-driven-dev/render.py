@@ -1,34 +1,38 @@
-"""將 slides.html 逐格渲染成 MP4，同時輸出 SRT 字幕同旁白稿。
+"""將 slides.html 逐格渲染成有旁白嘅 MP4，同時輸出 SRT 字幕同旁白稿。
 
 用法：
     pip install playwright imageio-ffmpeg
-    python render.py                 # 輸出 spec-driven-dev.mp4 / narration.srt / script.md
-    python render.py --preview       # 只截每個 step 嘅最終畫面去 preview/，方便檢查排版
+    python render.py --lang yue              # 廣東話旁白 → spec-driven-dev.yue.mp4
+    python render.py --lang cmn              # 普通話旁白 → spec-driven-dev.cmn.mp4
+    python render.py --lang cmn --engine melo   # 普通話用離線 MeloTTS（見 tts.py）
+    python render.py --lang yue --silent     # 唔配音，用字數估時間
+    python render.py --preview               # 只截每個 step 嘅最終畫面去 preview/
 
 可選環境變數：
     CHROMIUM_PATH  指定 Chromium 執行檔（預設用 Playwright 自帶）
     FRAMES_DIR     暫存影格資料夾（預設 ./.frames）
 """
 
+import argparse
 import math
 import os
 import shutil
 import subprocess
-import sys
+import wave
 from pathlib import Path
 
 import imageio_ffmpeg
 from playwright.sync_api import sync_playwright
 
+import tts
+
 HERE = Path(__file__).resolve().parent
 FPS = 30
-OUT_MP4 = HERE / 'spec-driven-dev.mp4'
-OUT_SRT = HERE / 'narration.srt'
-OUT_SCRIPT = HERE / 'script.md'
+LEAD, TAIL = 0.25, 0.6  # 每句旁白前後留白（秒）
 
 
-def hold_seconds(text: str) -> float:
-    # 中文字幕閱讀速度約每秒 7 個字，再加 0.9 秒緩衝
+def reading_seconds(text: str) -> float:
+    # 冇配音時：中文字幕閱讀速度約每秒 7 個字，再加 0.9 秒緩衝
     return max(2.8, len(text) * 0.15 + 0.9)
 
 
@@ -40,37 +44,69 @@ def srt_time(sec: float) -> str:
     return f'{h:02}:{m:02}:{s:02},{ms:03}'
 
 
-def build_timeline(page):
-    steps = page.evaluate('SCENES.map((s) => s.steps)')
+def frames_ceil(sec: float) -> float:
+    return math.ceil(sec * FPS) / FPS
+
+
+def build_timeline(page, args):
+    counts = page.evaluate('SCENES.map((s) => s.steps.length)')
     timeline = []
-    for si, scene_steps in enumerate(steps):
-        for k, text in enumerate(scene_steps):
-            # 過場長度對齊到整數格，SRT 時間先會同畫面完全一致
-            trans = math.ceil(page.evaluate(f'transitionFor({si}, {k})') * FPS) / FPS
-            timeline.append({'si': si, 'k': k, 'text': text, 'trans': trans, 'hold': hold_seconds(text)})
+    for si, n in enumerate(counts):
+        for k in range(n):
+            text = page.evaluate(f'stepText({si}, {k}, {args.lang!r})')
+            trans = frames_ceil(page.evaluate(f'transitionFor({si}, {k})'))
+            clip = None
+            if args.silent or args.preview:
+                total = trans + reading_seconds(text)
+            else:
+                clip = tts.synthesize(text, args.lang, args.engine)
+                total = max(trans + 0.8, LEAD + tts.wav_seconds(clip) + TAIL)
+                print(f'  [{si:02}.{k}] {tts.wav_seconds(clip):5.2f}s  {text[:40]}')
+            timeline.append({'si': si, 'k': k, 'text': text, 'trans': trans, 'total': frames_ceil(total), 'clip': clip})
     return timeline
 
 
-def write_srt_and_script(timeline, page):
+def write_srt_and_script(timeline, page, lang):
     titles = page.evaluate("SCENES.map((s) => s.title || s.file || 'Terminal')")
-    srt, script, t = [], ['# Spec-Driven Development × Coding Agent — 旁白稿', ''], 0.0
-    last_si = -1
+    head = {'yue': '廣東話旁白稿', 'cmn': '普通話旁白稿'}[lang]
+    srt, script, t, last_si = [], [f'# Spec-Driven Development × Coding Agent — {head}', ''], 0.0, -1
     for i, st in enumerate(timeline, 1):
-        start, end = t, t + st['trans'] + st['hold']
+        start, end = t, t + st['total']
         srt += [str(i), f'{srt_time(start)} --> {srt_time(end)}', st['text'], '']
         if st['si'] != last_si:
             script += ['', f"## {st['si'] + 1}. {titles[st['si']]}", '']
             last_si = st['si']
         script.append(f"- `{srt_time(start)[:8]}` {st['text']}")
         t = end
-    OUT_SRT.write_text('\n'.join(srt), encoding='utf-8')
-    OUT_SCRIPT.write_text('\n'.join(script) + '\n', encoding='utf-8')
+    (HERE / f'narration.{lang}.srt').write_text('\n'.join(srt), encoding='utf-8')
+    (HERE / f'script.{lang}.md').write_text('\n'.join(script) + '\n', encoding='utf-8')
     return t
 
 
+def write_audio(timeline, path: Path):
+    """將每句旁白放喺佢嗰個 step 開始後 LEAD 秒，其餘補靜音，同畫面逐格對齊。"""
+    with wave.open(str(path), 'wb') as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(tts.SAMPLE_RATE)
+        for st in timeline:
+            n_total = round(st['total'] * tts.SAMPLE_RATE)
+            voice = tts.wav_frames(st['clip']) if st['clip'] else b''
+            lead = round(LEAD * tts.SAMPLE_RATE) * 2 if voice else 0
+            body = (b'\0' * lead + voice)[: n_total * 2]
+            out.writeframes(body + b'\0' * (n_total * 2 - len(body)))
+
+
 def main():
-    preview = '--preview' in sys.argv
-    frames_dir = Path(os.environ.get('FRAMES_DIR', HERE / ('preview' if preview else '.frames')))
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--lang', choices=['yue', 'cmn'], default='yue')
+    ap.add_argument('--engine', choices=['google', 'melo'], default='google')
+    ap.add_argument('--silent', action='store_true')
+    ap.add_argument('--preview', action='store_true')
+    args = ap.parse_args()
+
+    out_mp4 = HERE / f'spec-driven-dev.{args.lang}.mp4'
+    frames_dir = Path(os.environ.get('FRAMES_DIR', HERE / ('preview' if args.preview else '.frames')))
     shutil.rmtree(frames_dir, ignore_errors=True)
     frames_dir.mkdir(parents=True)
 
@@ -83,32 +119,35 @@ def main():
         page.goto((HERE / 'slides.html').as_uri())
         page.evaluate('document.fonts.ready')
 
-        timeline = build_timeline(page)
-        total = write_srt_and_script(timeline, page)
+        timeline = build_timeline(page, args)
+        total = sum(st['total'] for st in timeline)
+        if not args.preview:
+            write_srt_and_script(timeline, page, args.lang)
         print(f'{len(timeline)} steps, {total:.1f}s ({total / 60:.1f} min)')
 
         concat, n, elapsed = [], 0, 0.0
         for st in timeline:
             si, k = st['si'], st['k']
-            if preview:
-                page.evaluate(f'renderFrame({si}, {k}, 1, {elapsed / total})')
+            if args.preview:
+                page.evaluate(f"renderFrame({si}, {k}, 1, {elapsed / total}, {args.lang!r})")
                 page.screenshot(path=str(frames_dir / f's{si:02}_{k:02}.png'))
-                elapsed += st['trans'] + st['hold']
+                elapsed += st['total']
                 continue
-            nframes = max(1, round(st['trans'] * FPS))
+            nframes = round(st['trans'] * FPS)
             for f in range(1, nframes + 1):
                 t = f / nframes
                 prog = (elapsed + t * st['trans']) / total
-                page.evaluate(f'renderFrame({si}, {k}, {t}, {prog})')
+                page.evaluate(f"renderFrame({si}, {k}, {t}, {prog}, {args.lang!r})")
                 path = frames_dir / f'{n:05}.jpg'
                 page.screenshot(path=str(path), type='jpeg', quality=94)
                 n += 1
-                dur = 1 / FPS + (st['hold'] if f == nframes else 0)
+                # 最後一格停留到呢個 step 完結
+                dur = 1 / FPS + (st['total'] - st['trans'] if f == nframes else 0)
                 concat.append(f"file '{path}'\nduration {dur:.4f}")
-            elapsed += st['trans'] + st['hold']
+            elapsed += st['total']
         browser.close()
 
-    if preview:
+    if args.preview:
         print(f'preview frames -> {frames_dir}')
         return
 
@@ -117,19 +156,23 @@ def main():
     list_file = frames_dir / 'list.txt'
     list_file.write_text('\n'.join(concat), encoding='utf-8')
 
-    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    audio_in = ['-f', 'lavfi', '-i', 'anullsrc=channel_layout=mono:sample_rate=24000']
+    if not args.silent:
+        voice = frames_dir / 'voice.wav'
+        write_audio(timeline, voice)
+        audio_in = ['-i', str(voice)]
+
     cmd = [
-        ffmpeg, '-y', '-loglevel', 'error',
-        '-f', 'concat', '-safe', '0', '-i', str(list_file),
-        '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+        imageio_ffmpeg.get_ffmpeg_exe(), '-y', '-loglevel', 'error',
+        '-f', 'concat', '-safe', '0', '-i', str(list_file), *audio_in,
         '-vf', f'fps={FPS},format=yuv420p',
         '-c:v', 'libx264', '-preset', 'slow', '-crf', '22', '-tune', 'stillimage',
-        '-c:a', 'aac', '-b:a', '64k', '-shortest',
-        '-movflags', '+faststart', str(OUT_MP4),
+        '-c:a', 'aac', '-b:a', '96k', '-shortest',
+        '-movflags', '+faststart', str(out_mp4),
     ]
     subprocess.run(cmd, check=True)
     shutil.rmtree(frames_dir, ignore_errors=True)
-    print(f'video -> {OUT_MP4} ({OUT_MP4.stat().st_size / 1e6:.1f} MB)')
+    print(f'video -> {out_mp4} ({out_mp4.stat().st_size / 1e6:.1f} MB)')
 
 
 if __name__ == '__main__':
