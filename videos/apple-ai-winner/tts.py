@@ -40,6 +40,8 @@ SAY = {
 def speech_text(text: str, lang: str) -> str:
     for a, b in SAY[lang]:
         text = text.replace(a, b)
+    # 用戶指定：AI 一律逐個字母讀「A. I.」（包括 OpenAI、xAI 入面嘅 AI）
+    text = re.sub(r'(?<![A-Z])AI(?![a-z])', ' A. I. ', text)
     return re.sub(r'[「」]', '', text)
 
 

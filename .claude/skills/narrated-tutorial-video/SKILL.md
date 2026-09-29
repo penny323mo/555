@@ -109,6 +109,8 @@ curl -sSLO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sh
 SENSEVOICE_DIR=./sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17 python verify_tts.py --lang yue
 ```
 
+**讀音規則（用戶指定）**：`AI` 一律逐個字母讀「A. I.」，包括 `OpenAI`、`xAI` 入面嘅 AI；`tts.py` 嘅 `speech_text()` 已經自動處理，寫稿時照寫「AI」就得，唔好寫成「艾」或者其他諧音。其他英文名讀得唔清楚，就加入 `SAY` 表（例如 Cybercab → Cyber Cab、NVIDIA H100 → 英偉達 H 一百）。
+
 參考基準（1.35 倍速）：廣東話 0.960、普通話 0.952。低分句要逐句睇清楚係真讀錯定係辨識誤差：同音字（程式↔城市）、產品名、Given/When/Then 呢類通常係辨識誤差。真讀錯就改稿，或者喺 `tts.py` 嘅 `SAY` 表加讀法替換（只影響讀音，唔影響字幕）。
 
 ### 6. 試聽確認（關口 2）
