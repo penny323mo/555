@@ -27,6 +27,8 @@ t2s = OpenCC('t2s')
 
 def norm(s: str) -> str:
     s = t2s.convert(tts.speech_text(s, 'cmn')).lower()
+    # 辨識結果會將 2024 寫成「二零二四」：比對前兩邊都去走數字，避免誤判
+    s = re.sub(r'[0-9零〇一二三四五六七八九十百千万亿两]', '', s)
     return re.sub(r'[^\w]|_', '', s)
 
 
