@@ -27,9 +27,16 @@ narration.cmn.js（普通話旁白）──┼─> slides.html ─> render.py �
 ### 1. 開工作資料夾
 
 ```bash
-cp -r <skill-dir>/template/. <output-dir>/     # slides.html, scenes.js, narration.cmn.js, render.py, tts.py, verify_tts.py
+cp -r <skill-dir>/template/. <output-dir>/     # slides.html, scenes.js, narration.cmn.js, render.py, tts.py, verify_tts.py, fetch_assets.py
 pip install playwright imageio-ffmpeg
+python fetch_assets.py    # 寫完 scenes.js 之後（同每次加新 img 之後）都要跑
 ```
+
+`fetch_assets.py` 做兩樣嘢：
+- **字體**：從 Google Fonts 下載 Noto Sans TC（標題 900、內文 500）、LXGW WenKai TC（霞鶩文楷，小標題同引言用）、Poppins（數字用），裝去 `~/.local/share/fonts/`。字體檔好大，唔好 commit。
+- **3D 插圖**：掃描 `scenes.js` 入面所有 `img: '名稱'`，從 Microsoft Fluent Emoji（MIT 授權）下載到 `assets/fluent/`，細檔可以 commit。名稱要用 Fluent 資料夾名，例如 `'Rocket'`、`'Satellite antenna'`、`'Hourglass not done'`、`'Globe with meridians'`；腳本會列出搵唔到嘅名，要換過另一個。
+
+受限網絡下，維基共享資源、NASA、Flickr、Unsplash 等相片來源通常被擋，所以用 Fluent 3D 插圖 + 自繪圖表（柱狀圖、時間線、放射圖）做配圖。
 
 有預裝 Chromium 就設 `CHROMIUM_PATH`（雲端環境通常係 `/opt/pw-browsers/chromium-*/chrome-linux/chrome`），唔好跑 `playwright install`。中文字型要有 WenQuanYi Zen Hei 或者類似 CJK 字型（`fc-list | grep -i cjk\|wqy\|noto`）。
 
@@ -41,6 +48,8 @@ pip install playwright imageio-ffmpeg
 - 每個 scene 揀一個 `layout`，欄位睇 `template/scenes.js`，每個版面都有示範：
   - 文字類：`title` / `bullets` / `outro`
   - 結構類：`chapter`（章節卡，每個大部分之前加一張，對應「分段原則」）/ `bignum`（超大數字開場，一個關鍵數字 + 一句說明）
+  - 配圖類：`hero`（左邊要點、右邊大 3D 插圖，最常用）/ `bars`（動畫柱狀圖）/ `timeline`（時間線，最多 5 個事件，亦可以做「想像一日」）
+  - 大部分版面都支援 `img`：`title` 用 `imgs` 砌拼貼，`chapter`/`bignum`/`hero` 右邊放大圖，清單 item、`hub` 節點、`flow` 節點、`stats` 卡、`compare` 標題、`timeline` 事件都可以加細圖
   - 圖像類（優先用，比純清單吸引）：`stats`（數字卡，`hl: true` 用高亮色）/ `compare`（左右對比，右邊係主角）/ `hub`（中心 + 放射節點，最多 6 個）/ `flow`（流程）
   - 技術類：`file` / `terminal` / `repo`
 - 盡量多用圖像類版面，唔好成條片都係清單，觀眾睇得悶
@@ -48,11 +57,13 @@ pip install playwright imageio-ffmpeg
 - **用字（用戶指定）**：畫面文字同字幕用**書面語**，配音先用**廣東話口語**。每個 step 寫成 `{ say: '口語', sub: '書面語' }`：`say` 係交俾 TTS 讀嘅，`sub` 係顯示喺字幕、SRT 同讀稿入面嘅。標題、item、卡片等畫面文字一律用書面語
 - **重點詞高亮**：畫面文字同 `sub` 入面用 `==關鍵字==` 標記，會變橙色加粗（Mayer「提示原則」）。每句最多一兩個，唔好滿天高亮；SRT、讀音會自動去走記號
 - 口語旁白一句 20–50 字；字幕太長會變兩行，壓到畫面
-- **篇幅**：目標 6 分鐘內（edX 研究：6 分鐘內嘅片最多人睇完），大約 12–15 個 scene、30–40 句。一句旁白可以同時帶出兩三個 item（同一個 `at`），唔使一項一句
+- **篇幅（用戶指定）**：用戶想要**內容豐富、8–10 分鐘**，大約 25–30 個 scene、80–90 句（1.35 倍速下每句約 6–7 秒）。唔好為咗短而刪內容；要加嘅係背景、數據圖、原理解釋、對比、想像情境、對手、對觀眾嘅實際影響。一句旁白可以同時帶出兩三個 item（同一個 `at`）
 - 講真實人物、公司或者時事：數字要上網核對，寫明「資料截至某年某月」；推演同構想要喺畫面標明（例如 `hub` 嘅 `tag: '⚠️ 根據公開資料的推演'`）；題目偏負面嘅，要加一段持平嘅另一面
 - 完整真實範例：`references/example-sdd-scenes.js`（15 scene、67 句，舊式純字串 steps）
 
-**視覺風格（用戶指定，參考 Vox 式克制配色）**：淺色、大字、唔好太暗、唔好太 cyber。模板預設已經係咁：
+**視覺風格（用戶指定，參考 Vox 式克制配色）**：淺色、大字、唔好太暗、唔好太 cyber、唔好平白單調、要有配圖。模板預設已經係咁：
+- 字體分工：標題 Noto Sans TC 900、內文 500；小標題、引言、結語用霞鶩文楷；數字用 Poppins。`**粗體**` 可以喺 item 入面加粗重點詞
+- 每個 scene 盡量都有一張 3D 插圖或者一個圖表，唔好出現純文字頁
 - 米白底（`--bg`）+ 一隻主色藍（`--accent`）+ 一隻高亮橙（`--hl`），唔好再加其他顏色
 - 卡片一律白色；旁白講緊嘅嗰項（`at === 當前 step`）自動用主色邊同陰影標示，其餘淡色
 - 字幕係白卡深字，42px

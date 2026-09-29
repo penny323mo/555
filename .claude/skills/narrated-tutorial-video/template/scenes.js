@@ -39,6 +39,38 @@ window.SCENES = [
     steps: ['大數字版面，適合開場震撼。', '補充說明。'],
   },
   {
+    layout: 'hero',
+    kicker: '配圖',
+    title: '左文右圖版面',
+    img: 'Rocket', // Fluent 3D 名稱，fetch_assets.py 會下載
+    points: [
+      { at: 0, text: '要點可以用 **粗體** 同 ==高亮==' },
+      { at: 1, text: '旁白講到邊點，邊點就亮邊框' },
+    ],
+    steps: ['左文右圖，最常用嘅版面。', '要點逐一出現。'],
+  },
+  {
+    layout: 'bars',
+    kicker: '圖表',
+    title: '柱狀圖版面',
+    bars: [
+      { at: 0, label: '2024', value: 415, display: '415' },
+      { at: 1, label: '2030', value: 945, display: '945', hl: true },
+    ],
+    note: '資料來源寫喺呢度',
+    steps: ['柱狀圖會由下而上長出嚟。', '重點柱用高亮色。'],
+  },
+  {
+    layout: 'timeline',
+    kicker: '時間',
+    title: '時間線版面',
+    events: [
+      { at: 0, date: '2025', img: 'Calendar', title: '事件一', text: '簡短說明' },
+      { at: 1, date: '2026', img: 'Rocket', title: '事件二', text: '簡短說明' },
+    ],
+    steps: ['時間線最多放五個事件。', '亦可以用嚟講「想像一日」。'],
+  },
+  {
     layout: 'bullets',
     kicker: '要點',
     title: '清單版面',
